@@ -3,14 +3,14 @@
     "debug": {
       "keystore": "./keys/android.jks",
       "storePassword": "Changeit",
-      "alias": "appKey",
+      "alias": "alias_name",
       "password": "Changeit",
       "packageType": "bundle"
     },
     "release": {
       "keystore": "./keys/android.jks",
       "storePassword": "Changeit",
-      "alias": "appKey",
+      "alias": "alias_name",
       "password": "Changeit",
       "packageType": "bundle"
     }
