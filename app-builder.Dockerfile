@@ -261,3 +261,8 @@ cat /image.config
 # -----------------------------------------------------------------------------
 RUN git config --global credential.helper store
 
+# -----------------------------------------------------------------------------
+# WORKDIR is the generic /app folder. All volume mounts of the actual project
+# code need to be put into /app.
+# -----------------------------------------------------------------------------
+WORKDIR /app
