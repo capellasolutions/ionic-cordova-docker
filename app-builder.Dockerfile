@@ -219,6 +219,7 @@ RUN \
 USER ${USER}
 
 ENV NPM_CONFIG_PREFIX=/home/${USER}/.npm-global
+ENV PATH="/home/${USER}/.npm-global/bin:${PATH}"
 
 # -----------------------------------------------------------------------------
 # Install Global node modules
@@ -260,26 +261,3 @@ cat /image.config
 # -----------------------------------------------------------------------------
 RUN git config --global credential.helper store
 
-# -----------------------------------------------------------------------------
-# WORKDIR is the generic /app folder. All volume mounts of the actual project
-# code need to be put into /app.
-# -----------------------------------------------------------------------------
-WORKDIR /app
-
-# If you removed the npm install and everything related to compose from next lines, I got a question then, why do you have all lines below?
-
-USER root
-
-RUN npm config set -g production false && \
-    chown -R ${USER}:${USER} /app
-RUN apt-get update -qqy && \
-  apt-get install -qqy --allow-unauthenticated \
-    rsync && \
-    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
-USER ${USER}
-
-ENV NPM_CONFIG_PREFIX=/home/${USER}/.npm-global
-ENV PATH="/home/${USER}/.npm-global/bin:${PATH}"
-
-RUN ${PACKAGE_MANAGER} cache clean --force
