@@ -7,6 +7,9 @@ docker build . -f ./app-builder.Dockerfile -t app-builder
 
 version="0.0.0"
 platform="all"
+ENV_NAME="prod"
+PACKAGE_ID="com.example.app"
+
 PS3="Select platform to build: "
 plt_options=("Android" "iOS" "All")
 invalid_opt="\n${COLOR_LIGHT_RED}Invalid option. Try another one.${COLOR_NC}\n"
