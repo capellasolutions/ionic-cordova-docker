@@ -3,7 +3,7 @@
 set -e
 
 docker build . -f ./app-builder.Dockerfile -t app-builder
-docker push app-builder
+#docker push app-builder
 
 version="0.0.0"
 platform="all"
