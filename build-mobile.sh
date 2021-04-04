@@ -50,18 +50,18 @@ docker build . \
   --build-arg PACKAGE_ID="${PACKAGE_ID}" \
   --build-arg PLATFORM=${platform} \
   --build-arg VERSION="${version}" \
-  -f ./docker/mobile-runner.Dockerfile \
-  -t splinc/sureview:frontend-mobile-latest
+  -f ./Dockerfile \
+  -t app-build
 
 if [[ "$platform" == "android" || "$platform" == "all" ]]
 then
   echo "Copying generated Android build to build-output/android"
-  docker run --user root:root --privileged=true -v "$cur_dir"/build-output:/app/mount:Z --rm --entrypoint cp splinc/sureview:frontend-mobile-latest -r ./output/android /app/mount
+  docker run --user root:root --privileged=true -v "$cur_dir"/build-output:/app/mount:Z --rm --entrypoint cp app-build -r ./output/android /app/mount
 fi
 
 if [[ "$platform" == "ios" || "$platform" == "all" ]]
 then
   echo "Copying generated iOS build to build-output/ios"
-  docker run --user root:root --privileged=true -v "$cur_dir"/build-output:/app/mount:Z --rm --entrypoint cp splinc/sureview:frontend-mobile-latest -r ./output/ios /app/mount
+  docker run --user root:root --privileged=true -v "$cur_dir"/build-output:/app/mount:Z --rm --entrypoint cp app-build -r ./output/ios /app/mount
   cd "$cur_dir"/build-output/ios && pod repo update && pod install
 fi
