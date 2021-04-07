@@ -23,6 +23,7 @@
     <preference name="WKSuspendInBackground" value="false" />
     <preference name="WKWebViewOnly" value="true" />
     <platform name="android">
+        <hook type="before_build" src="scripts/appAndroidBeforeBuild.js" />
         <preference name="AndroidXEnabled" value="true" />
         <preference name="android-minSdkVersion" value="22" />
         <preference name="android-targetSdkVersion" value="30" />
