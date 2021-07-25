@@ -39,8 +39,8 @@ ENV NPM_CONFIG_LOGLEVEL info
 ARG USER
 ENV USER ${USER:-ionic}
 
-ARG IONIC_VERSION
-ENV IONIC_VERSION ${IONIC_VERSION:-6.13.1}
+ARG IONIC_CLI_VERSION
+ENV IONIC_CLI_VERSION ${IONIC_CLI_VERSION:-6.16.3}
 
 
 # -----------------------------------------------------------------------------
@@ -234,11 +234,11 @@ RUN \
   if [ "${PACKAGE_MANAGER}" != "yarn" ]; then \
     export PACKAGE_MANAGER="npm" && \
     npm install -g cordova@"${CORDOVA_VERSION}" @angular/cli && \
-    if [ -n "${IONIC_VERSION}" ]; then npm install -g @ionic/cli@"${IONIC_VERSION}"; fi \
+    if [ -n "${IONIC_CLI_VERSION}" ]; then npm install -g @ionic/cli@"${IONIC_CLI_VERSION}"; fi \
   else \
     yarn global add cordova@"${CORDOVA_VERSION}" && \
     yarn global add @angular/cli && \
-    if [ -n "${IONIC_VERSION}" ]; then yarn global add @ionic/cli@"${IONIC_VERSION}"; fi \
+    if [ -n "${IONIC_CLI_VERSION}" ]; then yarn global add @ionic/cli@"${IONIC_CLI_VERSION}"; fi \
   fi && \
   ${PACKAGE_MANAGER} cache clean --force
 
@@ -255,7 +255,7 @@ ANDROID_BUILD_TOOLS_VERSION: ${ANDROID_BUILD_TOOLS_VERSION}\n\
 NODE_VERSION: ${NODE_VERSION}\n\
 PACKAGE_MANAGER: ${PACKAGE_MANAGER}\n\
 CORDOVA_VERSION: ${CORDOVA_VERSION}\n\
-IONIC_VERSION: ${IONIC_VERSION}\n\
+IONIC_CLI_VERSION: ${IONIC_CLI_VERSION}\n\
 " >> /image.config && \
 cat /image.config
 
