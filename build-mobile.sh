@@ -5,7 +5,7 @@ set -e
 docker build . -f ./app-builder.Dockerfile -t app-builder
 docker push app-builder
 
-version="0.0.0"
+version="0.0.1"
 platform="all"
 ENV_NAME="prod"
 PACKAGE_ID="com.example.app"
