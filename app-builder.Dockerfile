@@ -7,26 +7,26 @@ MAINTAINER Al-Mothafar Al-Hasan
 ENV DEBIAN_FRONTEND=noninteractive
 
 ARG JAVA_VERSION
-ENV JAVA_VERSION ${JAVA_VERSION:-8}
+ENV JAVA_VERSION ${JAVA_VERSION:-11}
 
 # Check https://cordova.apache.org/docs/en/latest/guide/platforms/android/ first, and make sure you've the latest "cordova-android" in package.json
 # And check <preference name="android-targetSdkVersion" value="X" /> in config.xml where X should same as ANDROID_PLATFORMS_VERSION
 ARG ANDROID_PLATFORMS_VERSION
-ENV ANDROID_PLATFORMS_VERSION ${ANDROID_PLATFORMS_VERSION:-29}
+ENV ANDROID_PLATFORMS_VERSION ${ANDROID_PLATFORMS_VERSION:-30}
 
 ARG GRADLE_VERSION
-ENV CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL https\\://services.gradle.org/distributions/gradle-${GRADLE_VERSION:-6.8.2}-all.zip
-ENV ANDROID_SDK_TOOLS_LINK https://dl.google.com/android/repository/commandlinetools-linux-6858069_latest.zip
+ENV CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL https\\://services.gradle.org/distributions/gradle-${GRADLE_VERSION:-7.1.1}-all.zip
+ENV ANDROID_SDK_TOOLS_LINK https://dl.google.com/android/repository/commandlinetools-linux-7302050_latest.zip
 
 ARG ANDROID_BUILD_TOOLS_VERSION
-ENV ANDROID_BUILD_TOOLS_VERSION ${ANDROID_BUILD_TOOLS_VERSION:-29.0.3}
+ENV ANDROID_BUILD_TOOLS_VERSION ${ANDROID_BUILD_TOOLS_VERSION:-30.0.3}
 
 ARG CORDOVA_VERSION
 ENV CORDOVA_VERSION ${CORDOVA_VERSION:-10.0.0}
 
 # Ionic project dependancies
 ARG NODE_VERSION
-ENV NODE_VERSION ${NODE_VERSION:-15.12.0}
+ENV NODE_VERSION ${NODE_VERSION:-16.5.0}
 
 ARG YARN_VERSION
 ENV YARN_VERSION ${YARN_VERSION:-1.22.10}
@@ -39,8 +39,8 @@ ENV NPM_CONFIG_LOGLEVEL info
 ARG USER
 ENV USER ${USER:-ionic}
 
-ARG IONIC_VERSION
-ENV IONIC_VERSION ${IONIC_VERSION:-6.13.1}
+ARG IONIC_CLI_VERSION
+ENV IONIC_CLI_VERSION ${IONIC_CLI_VERSION:-6.16.3}
 
 
 # -----------------------------------------------------------------------------
@@ -141,6 +141,7 @@ RUN buildDeps='xz-utils' \
     ; do \
      gpg --batch --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys "$key" || \
      gpg --batch --keyserver hkp://ipv4.pool.sks-keyservers.net --recv-keys "$key" || \
+     gpg --batch --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys "$key" || \
      gpg --batch --keyserver hkp://pgp.mit.edu:80 --recv-keys "$key" ; \
     done \
     && curl -fsSLO --compressed "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-$ARCH.tar.xz" \
@@ -149,7 +150,10 @@ RUN buildDeps='xz-utils' \
     && grep " node-v$NODE_VERSION-linux-$ARCH.tar.xz\$" SHASUMS256.txt | sha256sum -c - \
     && tar -xJf "node-v$NODE_VERSION-linux-$ARCH.tar.xz" -C /usr/local --strip-components=1 --no-same-owner \
     && rm "node-v$NODE_VERSION-linux-$ARCH.tar.xz" SHASUMS256.txt.asc SHASUMS256.txt \
-    && ln -s /usr/local/bin/node /usr/local/bin/nodejs
+    && ln -s /usr/local/bin/node /usr/local/bin/nodejs \
+    # smoke tests
+    && node --version \
+    && npm --version
 
 RUN set -ex \
   && for key in \
@@ -157,6 +161,7 @@ RUN set -ex \
   ; do \
     gpg --batch --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys "$key" || \
     gpg --batch --keyserver hkp://ipv4.pool.sks-keyservers.net --recv-keys "$key" || \
+    gpg --batch --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys "$key" || \
     gpg --batch --keyserver hkp://pgp.mit.edu:80 --recv-keys "$key" ; \
   done \
   && curl -fsSLO --compressed "https://yarnpkg.com/downloads/$YARN_VERSION/yarn-v$YARN_VERSION.tar.gz" \
@@ -229,11 +234,11 @@ RUN \
   if [ "${PACKAGE_MANAGER}" != "yarn" ]; then \
     export PACKAGE_MANAGER="npm" && \
     npm install -g cordova@"${CORDOVA_VERSION}" @angular/cli && \
-    if [ -n "${IONIC_VERSION}" ]; then npm install -g @ionic/cli@"${IONIC_VERSION}"; fi \
+    if [ -n "${IONIC_CLI_VERSION}" ]; then npm install -g @ionic/cli@"${IONIC_CLI_VERSION}"; fi \
   else \
     yarn global add cordova@"${CORDOVA_VERSION}" && \
     yarn global add @angular/cli && \
-    if [ -n "${IONIC_VERSION}" ]; then yarn global add @ionic/cli@"${IONIC_VERSION}"; fi \
+    if [ -n "${IONIC_CLI_VERSION}" ]; then yarn global add @ionic/cli@"${IONIC_CLI_VERSION}"; fi \
   fi && \
   ${PACKAGE_MANAGER} cache clean --force
 
@@ -250,7 +255,7 @@ ANDROID_BUILD_TOOLS_VERSION: ${ANDROID_BUILD_TOOLS_VERSION}\n\
 NODE_VERSION: ${NODE_VERSION}\n\
 PACKAGE_MANAGER: ${PACKAGE_MANAGER}\n\
 CORDOVA_VERSION: ${CORDOVA_VERSION}\n\
-IONIC_VERSION: ${IONIC_VERSION}\n\
+IONIC_CLI_VERSION: ${IONIC_CLI_VERSION}\n\
 " >> /image.config && \
 cat /image.config
 
