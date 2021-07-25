@@ -24,10 +24,10 @@ docker build . \
 ```
 
 Arguments:
-* `${PACKAGE_ID}`: is bundleId that you use for you app
-* `${ENV_NAME}`: prod or dev, depends on what your files ionic project is called inside environments' folder.
-* `${platform}`: `ios` or `android` or both using `all`
-* `${VERSION}`: optional to override the version that specified inside `config.xml` file, please refer to `Dockerfile` and uncomment the line that specify it.
+* `PACKAGE_ID`: is bundleId that you use for you app
+* `ENV_NAME`: prod or dev, depends on what your files ionic project is called inside environments' folder.
+* `PLATFORM`: `ios` or `android` or both using `all`
+* `VERSION`: optional to override the version that specified inside `config.xml` file, please refer to `Dockerfile` and uncomment the line that specify it.
 
 **Finally** to get the build out of that image:
 For Android build:
