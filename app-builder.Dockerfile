@@ -7,7 +7,7 @@ MAINTAINER Al-Mothafar Al-Hasan
 ENV DEBIAN_FRONTEND=noninteractive
 
 ARG JAVA_VERSION
-ENV JAVA_VERSION ${JAVA_VERSION:-8}
+ENV JAVA_VERSION ${JAVA_VERSION:-11}
 
 # Check https://cordova.apache.org/docs/en/latest/guide/platforms/android/ first, and make sure you've the latest "cordova-android" in package.json
 # And check <preference name="android-targetSdkVersion" value="X" /> in config.xml where X should same as ANDROID_PLATFORMS_VERSION
@@ -15,8 +15,8 @@ ARG ANDROID_PLATFORMS_VERSION
 ENV ANDROID_PLATFORMS_VERSION ${ANDROID_PLATFORMS_VERSION:-30}
 
 ARG GRADLE_VERSION
-ENV CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL https\\://services.gradle.org/distributions/gradle-${GRADLE_VERSION:-6.8.3}-all.zip
-ENV ANDROID_SDK_TOOLS_LINK https://dl.google.com/android/repository/commandlinetools-linux-6858069_latest.zip
+ENV CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL https\\://services.gradle.org/distributions/gradle-${GRADLE_VERSION:-7.1.1}-all.zip
+ENV ANDROID_SDK_TOOLS_LINK https://dl.google.com/android/repository/commandlinetools-linux-7302050_latest.zip
 
 ARG ANDROID_BUILD_TOOLS_VERSION
 ENV ANDROID_BUILD_TOOLS_VERSION ${ANDROID_BUILD_TOOLS_VERSION:-30.0.3}
