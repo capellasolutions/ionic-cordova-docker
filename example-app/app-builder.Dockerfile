@@ -69,12 +69,12 @@ RUN \
 # Check https://cordova.apache.org/docs/en/latest/guide/platforms/android/ first, and make sure you've the latest "cordova-android" in package.json
 # And check <preference name="android-targetSdkVersion" value="X" /> in config.xml where X should same as ANDROID_PLATFORMS_VERSION
 ARG ANDROID_PLATFORMS_VERSION
-ENV ANDROID_PLATFORMS_VERSION ${ANDROID_PLATFORMS_VERSION:-30}
+ENV ANDROID_PLATFORMS_VERSION ${ANDROID_PLATFORMS_VERSION:-31}
 
 ENV ANDROID_SDK_TOOLS_LINK https://dl.google.com/android/repository/commandlinetools-linux-7583922_latest.zip
 
 ARG ANDROID_BUILD_TOOLS_VERSION
-ENV ANDROID_BUILD_TOOLS_VERSION ${ANDROID_BUILD_TOOLS_VERSION:-30.0.3}
+ENV ANDROID_BUILD_TOOLS_VERSION ${ANDROID_BUILD_TOOLS_VERSION:-31.0.0}
 
 RUN \
   mkdir -p /root/.android && touch /root/.android/repositories.cfg  && \
