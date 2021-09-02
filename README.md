@@ -10,7 +10,29 @@ Use the following commands:
 docker build . -f ./app-builder.Dockerfile -t app-builder
 docker push app-builder
 ```
+Optionally, you can use `--build-arg` like
+
+```shell
+docker build . -f ./app-builder.Dockerfile \
+  --build-arg PACKAGE_MANAGER=yarn \
+  --build-arg ANDROID_PLATFORMS_VERSION=30 \
+  -t app-builder
+```
+
 *Note: You can change app-builder with whatever name you like, but you need to change that as well inside `Dockerfile`*
+
+Docker builder Arguments:
+* `GRADLE_VERSION`: gradle version you want to use. default is `7.2`
+* `JAVA_VERSION`: java sdk version, default is `8`
+* `ANDROID_PLATFORMS_VERSION`: android platform version that you want to target, default is 31
+* `ANDROID_BUILD_TOOLS_VERSION`: android build tools version that you want to target, default is 31.0.0
+* `PACKAGE_MANAGER`: `npm` or `yarn` default is `npm`
+* `NODE_VERSION`: Node JS that you desire to use, note that will be effecting npm version, default is `16.8.0` that uses npm 7+
+* `YARN_VERSION`: If you use yarn, what is the yarn version default is `1.22.10`
+* `USER`: That's helpful for permissions, default is `ionic` 
+* `CORDOVA_VERSION`: Cordova cli you want to use default is `10.0.0`
+* `IONIC_CLI_VERSION`: Ionic cli that you want to use, default is `6.17.0`
+
 
 **Then**, you can use your image to build the app:
 ```shell
