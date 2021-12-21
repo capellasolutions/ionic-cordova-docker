@@ -7,7 +7,7 @@ MAINTAINER Al-Mothafar Al-Hasan
 ENV DEBIAN_FRONTEND=noninteractive
 
 ARG GRADLE_VERSION
-ENV CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL https\\://services.gradle.org/distributions/gradle-${GRADLE_VERSION:-7.2}-all.zip
+ENV CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL https\\://services.gradle.org/distributions/gradle-${GRADLE_VERSION:-7.3.2}-all.zip
 
 
 # -----------------------------------------------------------------------------
@@ -69,12 +69,12 @@ RUN \
 # Check https://cordova.apache.org/docs/en/latest/guide/platforms/android/ first, and make sure you've the latest "cordova-android" in package.json
 # And check <preference name="android-targetSdkVersion" value="X" /> in config.xml where X should same as ANDROID_PLATFORMS_VERSION
 ARG ANDROID_PLATFORMS_VERSION
-ENV ANDROID_PLATFORMS_VERSION ${ANDROID_PLATFORMS_VERSION:-31}
+ENV ANDROID_PLATFORMS_VERSION ${ANDROID_PLATFORMS_VERSION:-32}
 
 ENV ANDROID_SDK_TOOLS_LINK https://dl.google.com/android/repository/commandlinetools-linux-7583922_latest.zip
 
 ARG ANDROID_BUILD_TOOLS_VERSION
-ENV ANDROID_BUILD_TOOLS_VERSION ${ANDROID_BUILD_TOOLS_VERSION:-31.0.0}
+ENV ANDROID_BUILD_TOOLS_VERSION ${ANDROID_BUILD_TOOLS_VERSION:-32.0.0}
 
 RUN \
   mkdir -p /root/.android && touch /root/.android/repositories.cfg  && \
@@ -101,10 +101,10 @@ ARG PACKAGE_MANAGER
 ENV PACKAGE_MANAGER ${PACKAGE_MANAGER:-npm}
 
 ARG NODE_VERSION
-ENV NODE_VERSION ${NODE_VERSION:-16.8.0}
+ENV NODE_VERSION ${NODE_VERSION:-16.13.1}
 
 ARG YARN_VERSION
-ENV YARN_VERSION ${YARN_VERSION:-1.22.10}
+ENV YARN_VERSION ${YARN_VERSION:-1.22.17}
 
 ENV NPM_CONFIG_LOGLEVEL info
 
@@ -232,7 +232,7 @@ ARG CORDOVA_VERSION
 ENV CORDOVA_VERSION ${CORDOVA_VERSION:-10.0.0}
 
 ARG IONIC_CLI_VERSION
-ENV IONIC_CLI_VERSION ${IONIC_CLI_VERSION:-6.17.0}
+ENV IONIC_CLI_VERSION ${IONIC_CLI_VERSION:-6.18.1}
 
 RUN \
   if [ "${PACKAGE_MANAGER}" != "yarn" ]; then \
