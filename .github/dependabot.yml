@@ -1,0 +1,26 @@
+version: 2
+updates:
+  # Demo app npm dependencies (Angular / Ionic / Cordova).
+  - package-ecosystem: npm
+    directory: /example-app
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+
+  # Base image (ubuntu) referenced by the canonical Docker files.
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+
+  # Base image referenced by the demo's mirrored Docker files.
+  - package-ecosystem: docker
+    directory: /example-app
+    schedule:
+      interval: weekly
+
+  # The GitHub Actions used by the CI workflow.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
