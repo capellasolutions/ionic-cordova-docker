@@ -34,14 +34,15 @@ docker build . -f ./app-builder.Dockerfile \
 *Note: You can change `app-builder` with whatever name you like, but you need to change it as well inside `Dockerfile` (the `FROM app-builder` line).*
 
 Docker builder arguments (defaults shown):
-* `GRADLE_VERSION`: Gradle version installed in the image and used for the Cordova wrapper. Default `8.13` (cordova-android 15 needs Gradle ≥ 8.4).
-* `JAVA_VERSION`: JDK version. Default `17`. This is what cordova-android 13–15 and the Android Gradle Plugin 8.x officially require; newer JDKs (21/25) aren't validated by the Android toolchain yet.
+* `GRADLE_VERSION`: Gradle version installed in the image and used for the Cordova wrapper. Default `8.14.5` (cordova-android 15 uses an AGP 8.x plugin, so stay on Gradle 8.x).
+* `JAVA_VERSION`: JDK version. Default `21` (LTS). cordova-android 13–15 officially document JDK 17, but AGP 8.x / Gradle 8.5+ also run on JDK 21; JDK 25 would need AGP 9 / Gradle 9.1+.
 * `ANDROID_PLATFORMS_VERSION`: Android platform (compile/target SDK) to install. Default `36`.
 * `ANDROID_BUILD_TOOLS_VERSION`: Android build-tools version. Default `36.0.0`.
 * `ANDROID_SDK_TOOLS_VERSION`: Android command-line tools build number. Default `14742923`.
-* `PACKAGE_MANAGER`: `npm` or `yarn`. Default `npm`.
+* `PACKAGE_MANAGER`: `npm`, `yarn`, or `pnpm` (yarn and pnpm are provided via Corepack). Default `npm`.
 * `NODE_VERSION`: Node.js major (installed via NodeSource). Default `24` (current LTS).
-* `YARN_VERSION`: Yarn version (enabled through Corepack when `PACKAGE_MANAGER=yarn`). Default `stable`.
+* `YARN_VERSION`: Yarn version prepared through Corepack. Default `stable`.
+* `PNPM_VERSION`: pnpm version prepared through Corepack. Default `latest`.
 * `USER`: helpful for permissions. Default `ionic`.
 * `CORDOVA_VERSION`: Cordova CLI version. Default `13.0.0`.
 * `IONIC_CLI_VERSION`: Ionic CLI version. Default `7.2.1`.

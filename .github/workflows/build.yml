@@ -13,7 +13,7 @@ jobs:
   drift-guard:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: example-app Docker files must match the canonical root files
         run: |
           diff -u Dockerfile example-app/Dockerfile
@@ -26,10 +26,10 @@ jobs:
       run:
         working-directory: example-app
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
           cache-dependency-path: example-app/package-lock.json
       - run: npm ci
@@ -44,7 +44,7 @@ jobs:
     needs: drift-guard
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Build the toolchain base image
         run: docker build . -f ./app-builder.Dockerfile -t app-builder
       - name: Build the demo app (Android) end-to-end

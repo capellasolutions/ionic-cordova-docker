@@ -13,7 +13,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 # NOTE: cordova-android 15 passes this straight to `gradle wrapper --gradle-distribution-url`,
 # so it must be a plain URL — the old `https\:` properties-file escaping breaks Gradle's parser.
 ARG GRADLE_VERSION
-ENV GRADLE_VERSION=${GRADLE_VERSION:-8.13}
+ENV GRADLE_VERSION=${GRADLE_VERSION:-8.14.5}
 ENV CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL=https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-all.zip
 
 
@@ -43,14 +43,13 @@ RUN \
 # -----------------------------------------------------------------------------
 # Install Java
 #
-# cordova-android 13+ (and the Android Gradle Plugin 8.x used by cordova-android 15)
-# officially require JDK 17. Newer LTS JDKs (21/25) are not validated by the Android
-# build chain yet, so 17 is the correct ceiling here. Kept as an ARG so it can move
-# once AGP/Cordova bless a newer JDK.
+# cordova-android 13+ officially document JDK 17; the Android Gradle Plugin 8.x used
+# by cordova-android 15 also runs on JDK 21 (with Gradle 8.5+), which is the newest LTS
+# that works here. JDK 25 would need AGP 9 / Gradle 9.1+. Kept as an ARG so it can move.
 # -----------------------------------------------------------------------------
 
 ARG JAVA_VERSION
-ENV JAVA_VERSION=${JAVA_VERSION:-17}
+ENV JAVA_VERSION=${JAVA_VERSION:-21}
 
 ENV JAVA_HOME=${JAVA_HOME:-/usr/lib/jvm/java-${JAVA_VERSION}-openjdk-amd64}
 
@@ -137,16 +136,22 @@ RUN curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION}.x | bash - && \
     node --version && \
     npm --version
 
-# Yarn is provided through Corepack (bundled with Node) instead of the old GPG/tarball
-# dance. It is enabled lazily so npm-only builds don't pay for it.
+# Yarn and pnpm are provided through Corepack (bundled with Node), so all three package
+# managers (npm + yarn + pnpm) are available; pick one per build via PACKAGE_MANAGER.
+# COREPACK_HOME is a shared, world-writable cache so the non-root build user can use (and
+# resolve project-pinned versions of) the prepared package managers (Corepack's default
+# cache otherwise lives in root's home, unreadable to the build user).
 ARG YARN_VERSION
 ENV YARN_VERSION=${YARN_VERSION:-stable}
+ARG PNPM_VERSION
+ENV PNPM_VERSION=${PNPM_VERSION:-latest}
+ENV COREPACK_HOME=/opt/corepack
 
-RUN if [ "${PACKAGE_MANAGER}" = "yarn" ]; then \
-      corepack enable && \
-      corepack prepare yarn@${YARN_VERSION} --activate && \
-      yarn --version; \
-    fi
+RUN corepack enable && \
+    corepack prepare yarn@${YARN_VERSION} pnpm@${PNPM_VERSION} --activate && \
+    chmod -R a+rwX ${COREPACK_HOME} && \
+    yarn --version && \
+    pnpm --version
 
 # -----------------------------------------------------------------------------
 # Install Ruby + CocoaPods (used when preparing the iOS project)
@@ -211,27 +216,29 @@ ENV CORDOVA_VERSION=${CORDOVA_VERSION:-13.0.0}
 ARG IONIC_CLI_VERSION
 ENV IONIC_CLI_VERSION=${IONIC_CLI_VERSION:-7.2.1}
 
-RUN \
-  if [ "${PACKAGE_MANAGER}" != "yarn" ]; then \
-    npm install -g cordova@"${CORDOVA_VERSION}" @angular/cli && \
+# The global CLIs are just executables on PATH, so install them with npm regardless of
+# PACKAGE_MANAGER (npm is always present; Corepack's Yarn 4 has no `global add`).
+# PACKAGE_MANAGER selects how the *app's* dependencies are installed, in the app Dockerfile.
+RUN npm install -g cordova@"${CORDOVA_VERSION}" @angular/cli && \
     if [ -n "${IONIC_CLI_VERSION}" ]; then npm install -g @ionic/cli@"${IONIC_CLI_VERSION}"; fi && \
-    npm cache clean --force; \
-  else \
-    yarn global add cordova@"${CORDOVA_VERSION}" && \
-    yarn global add @angular/cli && \
-    if [ -n "${IONIC_CLI_VERSION}" ]; then yarn global add @ionic/cli@"${IONIC_CLI_VERSION}"; fi && \
-    yarn cache clean; \
-  fi
+    npm cache clean --force
 
 
 # -----------------------------------------------------------------------------
 # Create the image.config file for the container to check the build
 # configuration of this container later on
 # -----------------------------------------------------------------------------
-RUN \
-printf 'USER: %s\nJAVA_VERSION: %s\nANDROID_PLATFORMS_VERSION: %s\nANDROID_BUILD_TOOLS_VERSION: %s\nNODE_VERSION: %s\nPACKAGE_MANAGER: %s\nCORDOVA_VERSION: %s\nIONIC_CLI_VERSION: %s\n' \
-  "${USER}" "${JAVA_VERSION}" "${ANDROID_PLATFORMS_VERSION}" "${ANDROID_BUILD_TOOLS_VERSION}" "${NODE_VERSION}" "${PACKAGE_MANAGER}" "${CORDOVA_VERSION}" "${IONIC_CLI_VERSION}" \
-  >> /image.config && \
+RUN { \
+  echo "USER: ${USER}"; \
+  echo "JAVA_VERSION: ${JAVA_VERSION}"; \
+  echo "GRADLE_VERSION: ${GRADLE_VERSION}"; \
+  echo "ANDROID_PLATFORMS_VERSION: ${ANDROID_PLATFORMS_VERSION}"; \
+  echo "ANDROID_BUILD_TOOLS_VERSION: ${ANDROID_BUILD_TOOLS_VERSION}"; \
+  echo "NODE_VERSION: ${NODE_VERSION}"; \
+  echo "PACKAGE_MANAGER: ${PACKAGE_MANAGER}"; \
+  echo "CORDOVA_VERSION: ${CORDOVA_VERSION}"; \
+  echo "IONIC_CLI_VERSION: ${IONIC_CLI_VERSION}"; \
+} >> /image.config && \
 cat /image.config
 
 
