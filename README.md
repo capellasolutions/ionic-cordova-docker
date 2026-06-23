@@ -7,7 +7,7 @@ These files can be placed inside an Ionic project to use.
 * `app-builder.Dockerfile` — builds the heavy **toolchain base image** (Ubuntu + JDK + Android SDK + Node + Cordova/Ionic CLIs). Build it once and reuse it; that's why it is a separate image.
 * `Dockerfile` — `FROM app-builder`, copies your app in and runs `ionic cordova build`. This is the per-app build.
 * `build-mobile.sh` — convenience wrapper that builds both images and copies the artifact out.
-* `example-app/` — a stock Ionic starter you can **clone and build immediately** to test the pipeline end-to-end. It carries its **own copies** of the three files above so it is self-contained (Docker can't reach files outside its build context, so the copies are required, not accidental). The root files are the source of truth; the `example-app` copies of `Dockerfile` and `app-builder.Dockerfile` are kept byte-for-byte identical (CI enforces this). `example-app/build-mobile.sh` is intentionally slightly different (it uses `version=0.0.0` and comments out `docker push`).
+* `example-app/` — a stock Ionic starter you can **clone and build immediately** to test the pipeline end-to-end. It carries its **own copies** of the three files above so it is self-contained (Docker can't reach files outside its build context, so the copies are required, not accidental). The root files are the source of truth; the `example-app` copies of `Dockerfile` and `app-builder.Dockerfile` are kept byte-for-byte identical (CI enforces this). `example-app/build-mobile.sh` is intentionally slightly different (it uses `version=0.0.0` and a self-contained header comment).
 
 To try it out right away:
 ```shell
@@ -65,6 +65,7 @@ Arguments:
 * `ENV_NAME`: `prod` or `dev`, depending on what your environment files are called inside the `environments` folder.
 * `PLATFORM`: `ios` or `android`, or both using `all`.
 * `VERSION`: optional override for the version specified inside `config.xml`. See `Dockerfile` and uncomment the line that sets it.
+* `PACKAGE_TYPE`: Android artifact type — `bundle` (`.aab` for Google Play, default) or `apk` (installable on a device). Overrides `packageType` in `build.json`.
 
 **Finally**, to get the build out of that image:
 For the Android build:
@@ -79,6 +80,32 @@ cd ./build-output/ios && pod repo update && pod install
 ```
 
 There is a `build-mobile.sh` file if you want to run all these steps from a shell (you can comment out the first part later).
+
+## Verifying and using the Android build
+The Android build is copied to `build-output/android`. By default it produces a **signed Android App Bundle** (the file you upload to the Google Play Console):
+```
+build-output/android/app/build/outputs/bundle/release/app-release.aab
+```
+The `intermediary-bundle.aab` under `.../intermediates/` is a Gradle scratch file — ignore it.
+
+Verify the artifact is signed:
+```shell
+jarsigner -verify build-output/android/app/build/outputs/bundle/release/app-release.aab
+# -> "jar verified."
+```
+
+An `.aab` cannot be installed on a device directly. To get an **installable APK** (e.g. for sideload testing), build with `PACKAGE_TYPE=apk`:
+```shell
+PACKAGE_TYPE=apk ./build-mobile.sh android
+```
+The APK then lands under `build-output/android/app/build/outputs/apk/release/`. Alternatively, generate APKs from an existing bundle with [bundletool](https://developer.android.com/tools/bundletool):
+```shell
+bundletool build-apks --mode=universal \
+  --bundle=app-release.aab --output=app.apks \
+  --ks=keys/android.jks --ks-key-alias=alias_name
+```
+
+> ⚠️ **Signing key:** the demo signs with the committed `keys/android.jks` (passwords `Changeit` in `build.json`). For a real app, generate your **own** keystore, keep it out of source control, and supply the passwords via secrets/environment — an app signed with the demo key can never be updated on Play by you.
 
 ## Continuous integration
 `.github/workflows/build.yml` runs on push/PR and:
