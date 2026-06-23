@@ -1,70 +1,109 @@
 #!/bin/bash
+#
+# Build the Ionic/Cordova app inside Docker and copy the artifacts to ./build-output.
+#
+# Run this from the root of your Ionic project (the folder that contains package.json).
+# The repo root is only a template; to try the pipeline use: cd example-app && ./build-mobile.sh
+#
+# Usage:
+#   ./build-mobile.sh [android|ios|all]
+# With no argument an interactive menu is shown.
+#
+# Configurable via environment, e.g.:
+#   ENV_NAME=dev PACKAGE_ID=com.acme.app PACKAGE_MANAGER=yarn ./build-mobile.sh android
 
-set -e
+set -euo pipefail
 
-docker build . -f ./app-builder.Dockerfile -t app-builder
-docker push app-builder
+# --- Colors (fall back to empty strings when output is not a terminal) --------
+if [ -t 1 ]; then
+  COLOR_NC=$'\033[0m'
+  COLOR_GREEN=$'\033[0;32m'
+  COLOR_LIGHT_RED=$'\033[1;31m'
+  COLOR_LIGHT_CYAN=$'\033[1;36m'
+  COLOR_LIGHT_PURPLE=$'\033[1;35m'
+else
+  COLOR_NC='' COLOR_GREEN='' COLOR_LIGHT_RED='' COLOR_LIGHT_CYAN='' COLOR_LIGHT_PURPLE=''
+fi
 
-version="0.0.1"
+# --- Sanity check: must run from an Ionic project root ------------------------
+if [ ! -f package.json ]; then
+  printf "%bERROR:%b no package.json found in %s\n" "$COLOR_LIGHT_RED" "$COLOR_NC" "$(pwd)" >&2
+  printf "Run this from the root of your Ionic project (try: cd example-app && ./build-mobile.sh)\n" >&2
+  exit 1
+fi
+
+# --- Configuration (override any of these via the environment) ---------------
+version="${VERSION:-0.0.1}"
+ENV_NAME="${ENV_NAME:-prod}"
+PACKAGE_ID="${PACKAGE_ID:-com.example.app}"
+PACKAGE_MANAGER="${PACKAGE_MANAGER:-npm}"
 platform="all"
-ENV_NAME="prod"
-PACKAGE_ID="com.example.app"
 
-PS3="Select platform to build: "
-plt_options=("Android" "iOS" "All")
-invalid_opt="\n${COLOR_LIGHT_RED}Invalid option. Try another one.${COLOR_NC}\n"
+# --- Build the toolchain base image ------------------------------------------
+# This image is heavy but cached; you can comment this line out after the first
+# successful build to save time.
+docker build . -f ./app-builder.Dockerfile \
+  --build-arg PACKAGE_MANAGER="${PACKAGE_MANAGER}" \
+  -t app-builder
+# Only needed if you distribute the builder image to a registry — and then you
+# must tag it with your registry host, e.g. docker push registry.example.com/app-builder
+#docker push app-builder
 
-select opt in "${plt_options[@]}" "Quit"; do
-  case "$REPLY" in
-  1)
-    # shellcheck disable=SC2059
-    printf "\n${COLOR_LIGHT_CYAN}You picked to build [${COLOR_GREEN}${opt}${COLOR_LIGHT_CYAN}] platform app ${COLOR_NC}\n\n"
-    platform="android"
-    break
+# --- Platform selection ------------------------------------------------------
+case "${1:-}" in
+  android | ios | all)
+    platform="$1"
+    printf "%bBuilding [%b%s%b] platform app%b\n\n" \
+      "$COLOR_LIGHT_CYAN" "$COLOR_GREEN" "$platform" "$COLOR_LIGHT_CYAN" "$COLOR_NC"
     ;;
-  2)
-    # shellcheck disable=SC2059
-    printf "\n${COLOR_LIGHT_CYAN}You picked to build [${COLOR_LIGHT_PURPLE}${opt}${COLOR_LIGHT_CYAN}] platform app ${COLOR_NC}\n\n"
-    platform="ios"
-    break
-    ;;
-  3)
-    # shellcheck disable=SC2059
-    printf "\n${COLOR_LIGHT_CYAN}You picked to build [${COLOR_LIGHT_PURPLE}${opt}${COLOR_LIGHT_CYAN}] platforms apps ${COLOR_NC}\n\n"
-    platform="all"
-    break
-    ;;
-  $((${#plt_options[@]} + 1)))
-    printf "Quitting execution"
-    exit
+  "")
+    PS3="Select platform to build: "
+    select opt in "Android" "iOS" "All" "Quit"; do
+      case "$REPLY" in
+        1) platform="android"; break ;;
+        2) platform="ios";     break ;;
+        3) platform="all";     break ;;
+        4) printf "Quitting execution\n"; exit 0 ;;
+        *) printf "%bInvalid option. Try another one.%b\n" "$COLOR_LIGHT_RED" "$COLOR_NC" ;;
+      esac
+    done
     ;;
   *)
-    # shellcheck disable=SC2059
-    printf "${invalid_opt}"
-    continue
+    printf "%bUnknown platform '%s'.%b Use: android | ios | all\n" \
+      "$COLOR_LIGHT_RED" "$1" "$COLOR_NC" >&2
+    exit 1
     ;;
-  esac
-done
+esac
 
 cur_dir=$(pwd)
+mkdir -p "$cur_dir/build-output"
 
+# --- Build the app image -----------------------------------------------------
 docker build . \
   --build-arg ENV_NAME="${ENV_NAME}" \
   --build-arg PACKAGE_ID="${PACKAGE_ID}" \
-  --build-arg PLATFORM=${platform} \
+  --build-arg PACKAGE_MANAGER="${PACKAGE_MANAGER}" \
+  --build-arg PLATFORM="${platform}" \
   --build-arg VERSION="${version}" \
   -f ./Dockerfile \
   -t app-build
 
-if [[ "$platform" == "android" || "$platform" == "all" ]]
-then
+# --- Copy the artifacts out of the image -------------------------------------
+if [ "$platform" = "android" ] || [ "$platform" = "all" ]; then
   echo "Copying generated Android build to build-output/android"
-  docker run --user root:root --privileged=true -v "$cur_dir"/build-output:/app/mount:Z --rm --entrypoint cp app-build -r ./output/android /app/mount
+  docker run --user root:root -v "$cur_dir"/build-output:/app/mount:Z --rm \
+    --entrypoint cp app-build -r ./output/android /app/mount
 fi
 
-if [[ "$platform" == "ios" || "$platform" == "all" ]]
-then
+if [ "$platform" = "ios" ] || [ "$platform" = "all" ]; then
   echo "Copying generated iOS build to build-output/ios"
-  docker run --user root:root --privileged=true -v "$cur_dir"/build-output:/app/mount:Z --rm --entrypoint cp app-build -r ./output/ios /app/mount
-  cd "$cur_dir"/build-output/ios && pod repo update && pod install
+  docker run --user root:root -v "$cur_dir"/build-output:/app/mount:Z --rm \
+    --entrypoint cp app-build -r ./output/ios /app/mount
+  # iOS can only be *prepared* on Linux; finish the build on macOS. CocoaPods is
+  # only available there, so skip 'pod install' cleanly when it's absent.
+  if command -v pod >/dev/null 2>&1; then
+    cd "$cur_dir"/build-output/ios && pod repo update && pod install
+  else
+    echo "Skipping 'pod install' (CocoaPods not found — run it on macOS)."
+  fi
 fi

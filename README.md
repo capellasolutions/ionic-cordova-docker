@@ -7,7 +7,7 @@ These files can be placed inside an Ionic project to use.
 * `app-builder.Dockerfile` — builds the heavy **toolchain base image** (Ubuntu + JDK + Android SDK + Node + Cordova/Ionic CLIs). Build it once and reuse it; that's why it is a separate image.
 * `Dockerfile` — `FROM app-builder`, copies your app in and runs `ionic cordova build`. This is the per-app build.
 * `build-mobile.sh` — convenience wrapper that builds both images and copies the artifact out.
-* `example-app/` — a stock Ionic starter you can **clone and build immediately** to test the pipeline end-to-end. It carries its **own copies** of the three files above so it is self-contained (Docker can't reach files outside its build context, so the copies are required, not accidental). The root files are the source of truth; the `example-app` copies of `Dockerfile` and `app-builder.Dockerfile` are kept byte-for-byte identical (CI enforces this). `example-app/build-mobile.sh` is intentionally slightly different (it uses `version=0.0.0` and comments out `docker push`).
+* `example-app/` — a stock Ionic starter you can **clone and build immediately** to test the pipeline end-to-end. It carries its **own copies** of the three files above so it is self-contained (Docker can't reach files outside its build context, so the copies are required, not accidental). The root files are the source of truth; the `example-app` copies of `Dockerfile` and `app-builder.Dockerfile` are kept byte-for-byte identical (CI enforces this). `example-app/build-mobile.sh` is intentionally slightly different (it uses `version=0.0.0` and a self-contained header comment).
 
 To try it out right away:
 ```shell
