@@ -10,9 +10,11 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # cordova-android 15 needs a system Gradle (>= 8.4) on PATH to generate its Gradle
 # wrapper; this var pins the wrapper's distribution to the same version we install below.
+# NOTE: cordova-android 15 passes this straight to `gradle wrapper --gradle-distribution-url`,
+# so it must be a plain URL — the old `https\:` properties-file escaping breaks Gradle's parser.
 ARG GRADLE_VERSION
 ENV GRADLE_VERSION=${GRADLE_VERSION:-8.13}
-ENV CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL=https\\://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-all.zip
+ENV CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL=https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-all.zip
 
 
 # -----------------------------------------------------------------------------
