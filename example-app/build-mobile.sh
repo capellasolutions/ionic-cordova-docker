@@ -41,6 +41,25 @@ PACKAGE_MANAGER="${PACKAGE_MANAGER:-npm}"
 PACKAGE_TYPE="${PACKAGE_TYPE:-bundle}"   # Android: "bundle" (.aab) or "apk"
 platform="all"
 
+# Validate the values that get forwarded straight into the build (fail fast with a
+# clear message instead of a cryptic error deep inside the Docker build).
+case "$PACKAGE_TYPE" in
+  bundle | apk) ;;
+  *)
+    printf "%bInvalid PACKAGE_TYPE '%s'.%b Use: bundle | apk\n" \
+      "$COLOR_LIGHT_RED" "$PACKAGE_TYPE" "$COLOR_NC" >&2
+    exit 1
+    ;;
+esac
+case "$PACKAGE_MANAGER" in
+  npm | yarn | pnpm) ;;
+  *)
+    printf "%bInvalid PACKAGE_MANAGER '%s'.%b Use: npm | yarn | pnpm\n" \
+      "$COLOR_LIGHT_RED" "$PACKAGE_MANAGER" "$COLOR_NC" >&2
+    exit 1
+    ;;
+esac
+
 # --- Build the toolchain base image ------------------------------------------
 # This image is heavy but cached; you can comment this line out after the first
 # successful build to save time.
