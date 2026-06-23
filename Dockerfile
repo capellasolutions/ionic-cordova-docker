@@ -19,17 +19,28 @@ RUN echo "------------------------------------------"&& \
     echo "| Version: ${VERSION}                     "&& \
     echo "------------------------------------------"
 
-# Add package.json and package-lock.json first (before the rest of the project) so
-# the dependency-install layer is cached and only re-runs when dependencies change.
+# Add package.json and lockfile first (before the rest of the project) so the
+# dependency-install layer is cached and only re-runs when dependencies change.
 # https://docs.docker.com/develop/develop-images/dockerfile_best-practices/#use-multi-stage-builds
-ADD --chown=ionic *.json ./
+ADD --chown=ionic package.json package-lock.json* yarn.lock* pnpm-lock.yaml* ./
 
 RUN sed -i "s/\"name\":.*/\"name\": \"${PACKAGE_ID}\",/g" ./package.json
 # Uncomment if you want the version from Argument
 #RUN sed -i "s/\"version\":.*/\"version\": \"${VERSION}\",/g" ./package.json
 
-# Use a clean, reproducible install when a lockfile is present; fall back to install otherwise.
-RUN if [ -f package-lock.json ]; then npm ci; else npm install; fi
+# PACKAGE_MANAGER is inherited from the app-builder image (selected there via
+# --build-arg PACKAGE_MANAGER). yarn/pnpm use a clean, reproducible install when their
+# lockfile is present; npm falls back to `install` if there's no package-lock.json yet.
+RUN \
+  if [ "${PACKAGE_MANAGER}" = "yarn" ]; then \
+    yarn install --frozen-lockfile; \
+  elif [ "${PACKAGE_MANAGER}" = "pnpm" ]; then \
+    pnpm install --frozen-lockfile; \
+  elif [ -f package-lock.json ]; then \
+    npm ci; \
+  else \
+    npm install; \
+  fi
 
 ADD --chown=ionic  . .
 

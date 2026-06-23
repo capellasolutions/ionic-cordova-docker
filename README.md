@@ -39,7 +39,7 @@ Docker builder arguments (defaults shown):
 * `ANDROID_PLATFORMS_VERSION`: Android platform (compile/target SDK) to install. Default `36`.
 * `ANDROID_BUILD_TOOLS_VERSION`: Android build-tools version. Default `36.0.0`.
 * `ANDROID_SDK_TOOLS_VERSION`: Android command-line tools build number. Default `14742923`.
-* `PACKAGE_MANAGER`: `npm`, `yarn`, or `pnpm` (yarn and pnpm are provided via Corepack). Default `npm`.
+* `PACKAGE_MANAGER`: `npm`, `yarn`, or `pnpm` (yarn and pnpm are provided via Corepack). Default `npm`. Also selects how `Dockerfile` installs *your app's* dependencies (`npm ci`/`yarn install --frozen-lockfile`/`pnpm install --frozen-lockfile`), so make sure the matching lockfile (`package-lock.json`/`yarn.lock`/`pnpm-lock.yaml`) is committed.
 * `NODE_VERSION`: Node.js major (installed via NodeSource). Default `24` (current LTS).
 * `YARN_VERSION`: Yarn version prepared through Corepack. Default `stable`.
 * `PNPM_VERSION`: pnpm version prepared through Corepack. Default `latest`.
