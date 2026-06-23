@@ -1,4 +1,4 @@
-FROM ubuntu:24.04
+FROM ubuntu:26.04
 LABEL org.opencontainers.image.authors="Al-Mothafar Al-Hasan"
 LABEL org.opencontainers.image.title="ionic-cordova-app-builder"
 LABEL org.opencontainers.image.description="Toolchain image for building Ionic/Cordova Android apps (and preparing iOS)."
