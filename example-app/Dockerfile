@@ -56,10 +56,11 @@ ENV BUILD_RESULT="Building Android App is done"
 
 # Build the Angular web app first, then let Cordova package it. We call `cordova`
 # directly instead of `ionic cordova build` because @ionic/angular-toolkit no longer
-# ships the `cordova-build` Angular builder; `cordova build` restores the platform
-# from config.xml's <engine> and copies the already-built ./www.
+# ships the `cordova-build` Angular builder. The platform is added explicitly (it was
+# removed by the `rm -rf` above), then `cordova build` copies the already-built ./www.
 RUN rm -rf ./www ./platforms ./plugins && \
     npm run build -- --configuration=production && \
+    cordova platform add android && \
     cordova build android --release --buildConfig=build.json -- -d && \
     mkdir -p ./output/android && \
     mv ./platforms/android/* ./output/android
@@ -71,6 +72,7 @@ ENV BUILD_RESULT="Building iOS App is done"
 # iOS cannot be compiled on Linux; we only prepare the Xcode project for a macOS runner to build.
 RUN rm -rf ./www ./platforms ./plugins && \
     npm run build -- --configuration=production && \
+    cordova platform add ios && \
     cordova prepare ios && \
     mkdir -p ./output/ios && \
     mv ./platforms/ios/* ./output/ios
@@ -81,11 +83,13 @@ ENV BUILD_RESULT="Building Android and then iOS Apps is done"
 
 RUN rm -rf ./www ./platforms ./plugins && \
     npm run build -- --configuration=production && \
+    cordova platform add android && \
     cordova build android --release --buildConfig=build.json -- -d && \
     mkdir -p ./output/android && \
     mv ./platforms/android/* ./output/android
 
 RUN rm -rf ./platforms ./plugins && \
+    cordova platform add ios && \
     cordova prepare ios && \
     mkdir -p ./output/ios && \
     mv ./platforms/ios/* ./output/ios
