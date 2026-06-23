@@ -1,13 +1,20 @@
-FROM ubuntu:20.04
-MAINTAINER Al-Mothafar Al-Hasan
+FROM ubuntu:24.04
+LABEL org.opencontainers.image.authors="Al-Mothafar Al-Hasan"
+LABEL org.opencontainers.image.title="ionic-cordova-app-builder"
+LABEL org.opencontainers.image.description="Toolchain image for building Ionic/Cordova Android apps (and preparing iOS)."
 
 # -----------------------------------------------------------------------------
 # General environment variables
 # -----------------------------------------------------------------------------
 ENV DEBIAN_FRONTEND=noninteractive
 
+# cordova-android 15 needs a system Gradle (>= 8.4) on PATH to generate its Gradle
+# wrapper; this var pins the wrapper's distribution to the same version we install below.
+# NOTE: cordova-android 15 passes this straight to `gradle wrapper --gradle-distribution-url`,
+# so it must be a plain URL — the old `https\:` properties-file escaping breaks Gradle's parser.
 ARG GRADLE_VERSION
-ENV CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL https\\://services.gradle.org/distributions/gradle-${GRADLE_VERSION:-7.2}-all.zip
+ENV GRADLE_VERSION=${GRADLE_VERSION:-8.14.5}
+ENV CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL=https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-all.zip
 
 
 # -----------------------------------------------------------------------------
@@ -15,66 +22,72 @@ ENV CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL https\\://services.gradle.org/distri
 # -----------------------------------------------------------------------------
 RUN \
   apt-get update -qqy && \
-  apt-get install -qqy --allow-unauthenticated \
+  apt-get install -qqy --no-install-recommends \
           apt-transport-https \
+          ca-certificates \
           software-properties-common \
-          python \
+          gnupg \
+          python3 \
           make \
           g++ \
           curl \
           expect \
           zip \
+          unzip \
           libsass-dev \
           git \
+          rsync \
           sudo
 
 
 # -----------------------------------------------------------------------------
 # Install Java
+#
+# cordova-android 13+ officially document JDK 17; the Android Gradle Plugin 8.x used
+# by cordova-android 15 also runs on JDK 21 (with Gradle 8.5+), which is the newest LTS
+# that works here. JDK 25 would need AGP 9 / Gradle 9.1+. Kept as an ARG so it can move.
 # -----------------------------------------------------------------------------
 
 ARG JAVA_VERSION
-ENV JAVA_VERSION ${JAVA_VERSION:-8}
+ENV JAVA_VERSION=${JAVA_VERSION:-21}
 
-ENV JAVA_HOME ${JAVA_HOME:-/usr/lib/jvm/java-${JAVA_VERSION}-openjdk-amd64}
-# For JDK 9 and JDK 10 uncomment the following
-#ENV JAVA_OPTS '-XX:+IgnoreUnrecognizedVMOptions --add-modules java.se.ee'
+ENV JAVA_HOME=${JAVA_HOME:-/usr/lib/jvm/java-${JAVA_VERSION}-openjdk-amd64}
 
-RUN add-apt-repository ppa:openjdk-r/ppa -y && \
-  apt-get update -qqy && \
-  apt-get install openjdk-${JAVA_VERSION}-jdk -qqy
+RUN apt-get update -qqy && \
+  apt-get install -qqy --no-install-recommends openjdk-${JAVA_VERSION}-jdk
 
 
 # -----------------------------------------------------------------------------
 # Install Android / Android SDK / Android SDK elements
 # -----------------------------------------------------------------------------
 
-ENV ANDROID_SDK_ROOT /opt/android-sdk-linux
-ENV PATH ${PATH}:${ANDROID_SDK_ROOT}/cmdline-tools/latest:${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin:${ANDROID_SDK_ROOT}/platform-tools:/opt/tools
+ENV ANDROID_SDK_ROOT=/opt/android-sdk-linux
+# ANDROID_HOME is the modern name; keep it pointing at the same path for tooling that expects it.
+ENV ANDROID_HOME=${ANDROID_SDK_ROOT}
+ENV PATH=${PATH}:${ANDROID_SDK_ROOT}/cmdline-tools/latest:${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin:${ANDROID_SDK_ROOT}/platform-tools:/opt/tools
 
 RUN \
   echo ANDROID_SDK_ROOT=${ANDROID_SDK_ROOT} >> /etc/environment && \
   dpkg --add-architecture i386 && \
   apt-get update -qqy && \
-  apt-get install -qqy --allow-unauthenticated\
-          gradle  \
+  apt-get install -qqy --no-install-recommends \
           libc6-i386 \
           lib32stdc++6 \
-          lib32gcc1 \
+          lib32gcc-s1 \
           lib32ncurses6 \
-          lib32z1 \
-          qemu-kvm \
-          kmod
+          lib32z1
 
 # Check https://cordova.apache.org/docs/en/latest/guide/platforms/android/ first, and make sure you've the latest "cordova-android" in package.json
 # And check <preference name="android-targetSdkVersion" value="X" /> in config.xml where X should same as ANDROID_PLATFORMS_VERSION
+# cordova-android 15 requires SDK Platform 36 and Build Tools 36.0.0.
 ARG ANDROID_PLATFORMS_VERSION
-ENV ANDROID_PLATFORMS_VERSION ${ANDROID_PLATFORMS_VERSION:-30}
+ENV ANDROID_PLATFORMS_VERSION=${ANDROID_PLATFORMS_VERSION:-36}
 
-ENV ANDROID_SDK_TOOLS_LINK https://dl.google.com/android/repository/commandlinetools-linux-7583922_latest.zip
+ARG ANDROID_SDK_TOOLS_VERSION
+ENV ANDROID_SDK_TOOLS_LINK=https://dl.google.com/android/repository/commandlinetools-linux-${ANDROID_SDK_TOOLS_VERSION:-14742923}_latest.zip
 
 ARG ANDROID_BUILD_TOOLS_VERSION
-ENV ANDROID_BUILD_TOOLS_VERSION ${ANDROID_BUILD_TOOLS_VERSION:-30.0.3}
+ENV ANDROID_BUILD_TOOLS_VERSION=${ANDROID_BUILD_TOOLS_VERSION:-36.0.0}
 
 RUN \
   mkdir -p /root/.android && touch /root/.android/repositories.cfg  && \
@@ -84,95 +97,69 @@ RUN \
   mv ${ANDROID_SDK_ROOT}/cmdline-tools/* ${ANDROID_SDK_ROOT}/latest && mv ${ANDROID_SDK_ROOT}/latest ${ANDROID_SDK_ROOT}/cmdline-tools/latest &&  \
   rm -f sdk-tools-linux.zip && chmod 775 ${ANDROID_SDK_ROOT} -R
 
-RUN ls ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin
 RUN  yes | sdkmanager --update && yes | sdkmanager --licenses && \
-  sdkmanager "tools" && \
   sdkmanager "platform-tools" && \
   sdkmanager "platforms;android-${ANDROID_PLATFORMS_VERSION}" && \
   sdkmanager "build-tools;${ANDROID_BUILD_TOOLS_VERSION}"
 
-RUN ls ${ANDROID_SDK_ROOT}
+# -----------------------------------------------------------------------------
+# Install Gradle
+#
+# cordova-android 15 invokes a system `gradle` to generate the project's Gradle
+# wrapper. Ubuntu's apt Gradle is far too old for the Android Gradle Plugin, so we
+# install the official distribution and put it on PATH.
+# -----------------------------------------------------------------------------
+RUN curl -SLo /tmp/gradle.zip https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip && \
+  unzip -q /tmp/gradle.zip -d /opt && \
+  rm -f /tmp/gradle.zip && \
+  ln -s /opt/gradle-${GRADLE_VERSION}/bin/gradle /usr/local/bin/gradle && \
+  gradle --version
 
 # -----------------------------------------------------------------------------
-# Install Node, NPM, yarn
+# Install Node & npm via NodeSource
+#
+# The old manual tarball + GPG verification relied on the SKS keyserver pool, which
+# was permanently shut down in 2021 and made this image impossible to build. NodeSource
+# ships a maintained apt repo with its own signing key.
 # -----------------------------------------------------------------------------
 
 ARG PACKAGE_MANAGER
-ENV PACKAGE_MANAGER ${PACKAGE_MANAGER:-npm}
+ENV PACKAGE_MANAGER=${PACKAGE_MANAGER:-npm}
 
 ARG NODE_VERSION
-ENV NODE_VERSION ${NODE_VERSION:-16.8.0}
+ENV NODE_VERSION=${NODE_VERSION:-24}
 
+ENV NPM_CONFIG_LOGLEVEL=info
+
+RUN curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION}.x | bash - && \
+    apt-get install -qqy --no-install-recommends nodejs && \
+    node --version && \
+    npm --version
+
+# Yarn and pnpm are provided through Corepack (bundled with Node), so all three package
+# managers (npm + yarn + pnpm) are available; pick one per build via PACKAGE_MANAGER.
+# COREPACK_HOME is a shared, world-writable cache so the non-root build user can use (and
+# resolve project-pinned versions of) the prepared package managers (Corepack's default
+# cache otherwise lives in root's home, unreadable to the build user).
 ARG YARN_VERSION
-ENV YARN_VERSION ${YARN_VERSION:-1.22.10}
+ENV YARN_VERSION=${YARN_VERSION:-stable}
 
-ENV NPM_CONFIG_LOGLEVEL info
+ARG PNPM_VERSION
+ENV PNPM_VERSION=${PNPM_VERSION:-latest}
 
-RUN buildDeps='xz-utils' \
-    && ARCH= && dpkgArch="$(dpkg --print-architecture)" \
-    && case "${dpkgArch##*-}" in \
-     amd64) ARCH='x64';; \
-     ppc64el) ARCH='ppc64le';; \
-     s390x) ARCH='s390x';; \
-     arm64) ARCH='arm64';; \
-     armhf) ARCH='armv7l';; \
-     i386) ARCH='x86';; \
-     *) echo "unsupported architecture"; exit 1 ;; \
-    esac \
-    # gpg keys listed at https://github.com/nodejs/node#release-keys
-    && set -ex \
-    && for key in \
-     4ED778F539E3634C779C87C6D7062848A1AB005C \
-     94AE36675C464D64BAFA68DD7434390BDBE9B9C5 \
-     74F12602B6F1C4E913FAA37AD3A89613643B6201 \
-     71DCFD284A79C3B38668286BC97EC7A07EDE3FC1 \
-     8FCCA13FEF1D0C2E91008E09770F7A9A5AE15600 \
-     C4F0DFFF4E8C1A8236409D08E73BC641CC11F4C8 \
-     C82FA3AE1CBEDC6BE46B9360C43CEC45C17AB93C \
-     DD8F2338BAE7501E3DD5AC78C273792F7D83545D \
-     A48C2BEE680E841632CD4E44F07496B3EB3C1762 \
-     108F52B48DB57BB0CC439B2997B01419BD92F80A \
-     B9E2F5981AA6E0CD28160D9FF13993A75599653C \
-    ; do \
-     gpg --batch --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys "$key" || \
-     gpg --batch --keyserver hkp://ipv4.pool.sks-keyservers.net --recv-keys "$key" || \
-     gpg --batch --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys "$key" || \
-     gpg --batch --keyserver hkp://pgp.mit.edu:80 --recv-keys "$key" ; \
-    done \
-    && curl -fsSLO --compressed "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-$ARCH.tar.xz" \
-    && curl -fsSLO --compressed "https://nodejs.org/dist/v$NODE_VERSION/SHASUMS256.txt.asc" \
-    && gpg --batch --decrypt --output SHASUMS256.txt SHASUMS256.txt.asc \
-    && grep " node-v$NODE_VERSION-linux-$ARCH.tar.xz\$" SHASUMS256.txt | sha256sum -c - \
-    && tar -xJf "node-v$NODE_VERSION-linux-$ARCH.tar.xz" -C /usr/local --strip-components=1 --no-same-owner \
-    && rm "node-v$NODE_VERSION-linux-$ARCH.tar.xz" SHASUMS256.txt.asc SHASUMS256.txt \
-    && ln -s /usr/local/bin/node /usr/local/bin/nodejs \
-    # smoke tests
-    && node --version \
-    && npm --version
+ENV COREPACK_HOME=/opt/corepack
 
-RUN set -ex \
-  && for key in \
-    6A010C5166006599AA17F08146C2130DFD2497F5 \
-  ; do \
-    gpg --batch --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys "$key" || \
-    gpg --batch --keyserver hkp://ipv4.pool.sks-keyservers.net --recv-keys "$key" || \
-    gpg --batch --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys "$key" || \
-    gpg --batch --keyserver hkp://pgp.mit.edu:80 --recv-keys "$key" ; \
-  done \
-  && curl -fsSLO --compressed "https://yarnpkg.com/downloads/$YARN_VERSION/yarn-v$YARN_VERSION.tar.gz" \
-  && curl -fsSLO --compressed "https://yarnpkg.com/downloads/$YARN_VERSION/yarn-v$YARN_VERSION.tar.gz.asc" \
-  && gpg --batch --verify yarn-v$YARN_VERSION.tar.gz.asc yarn-v$YARN_VERSION.tar.gz \
-  && mkdir -p /opt \
-  && tar -xzf yarn-v$YARN_VERSION.tar.gz -C /opt/ \
-  && ln -s /opt/yarn-v$YARN_VERSION/bin/yarn /usr/local/bin/yarn \
-  && ln -s /opt/yarn-v$YARN_VERSION/bin/yarnpkg /usr/local/bin/yarnpkg \
-  && rm yarn-v$YARN_VERSION.tar.gz.asc yarn-v$YARN_VERSION.tar.gz
+RUN corepack enable && \
+    corepack prepare yarn@${YARN_VERSION} pnpm@${PNPM_VERSION} --activate && \
+    chmod -R a+rwX ${COREPACK_HOME} && \
+    yarn --version && \
+    pnpm --version
 
 # -----------------------------------------------------------------------------
-# Install Ruby
+# Install Ruby + CocoaPods (used when preparing the iOS project)
 # -----------------------------------------------------------------------------
 
-RUN apt-get update && apt install ruby-full -y && \
+RUN apt-get update && apt-get install -qqy --no-install-recommends ruby-full && \
     gem install bigdecimal etc && gem install cocoapods
 
 # -----------------------------------------------------------------------------
@@ -189,30 +176,27 @@ RUN \
 # -----------------------------------------------------------------------------
 
 ARG USER
-ENV USER ${USER:-ionic}
+ENV USER=${USER:-ionic}
 
 RUN \
-  echo "create user with appropriate rights, groups and permissions" && \
-  useradd --user-group --create-home --shell /bin/false ${USER} && \
+  echo "create the build user" && \
+  useradd --user-group --create-home --shell /bin/bash ${USER} && \
   echo "${USER}:${USER}" | chpasswd && \
   adduser ${USER} sudo && \
-  adduser ${USER} root && \
-  chmod 775 / && \
-  usermod -a -G root ${USER} && \
   \
-  echo "create the file and set permissions now with root user" && \
+  echo "create app/build dirs owned by the build user" && \
   mkdir /app && chown ${USER}:${USER} /app && chmod 775 /app && \
   mkdir /build && chown ${USER}:${USER} /build && chmod 775 /build && \
   \
-  echo "create the file and set permissions now with root user" && \
-  touch /image.config && chown ${USER}:${USER} /image.config && chmod 775 /image.config && \
+  echo "image.config is written below as the build user" && \
+  touch /image.config && chown ${USER}:${USER} /image.config && chmod 664 /image.config && \
   \
   echo "this is necessary for ionic commands to run" && \
   mkdir /home/${USER}/.ionic && chown ${USER}:${USER} /home/${USER}/.ionic && chmod 775 /home/${USER}/.ionic && \
   \
-  echo "this is necessary to install global npm modules" && \
-  chown ${USER}:${USER} /usr/local/bin
-  #&& chown ${USER}:${USER} ${ANDROID_SDK_ROOT} -R
+  echo "give the build user its own Android config dir (the SDK itself is world-readable via chmod 775 above)" && \
+  mkdir -p /home/${USER}/.android && touch /home/${USER}/.android/repositories.cfg && \
+  chown -R ${USER}:${USER} /home/${USER}/.android
 
 
 # -----------------------------------------------------------------------------
@@ -229,38 +213,34 @@ ENV PATH="/home/${USER}/.npm-global/bin:${PATH}"
 # -----------------------------------------------------------------------------
 
 ARG CORDOVA_VERSION
-ENV CORDOVA_VERSION ${CORDOVA_VERSION:-10.0.0}
+ENV CORDOVA_VERSION=${CORDOVA_VERSION:-13.0.0}
 
 ARG IONIC_CLI_VERSION
-ENV IONIC_CLI_VERSION ${IONIC_CLI_VERSION:-6.17.0}
+ENV IONIC_CLI_VERSION=${IONIC_CLI_VERSION:-7.2.1}
 
-RUN \
-  if [ "${PACKAGE_MANAGER}" != "yarn" ]; then \
-    export PACKAGE_MANAGER="npm" && \
-    npm install -g cordova@"${CORDOVA_VERSION}" @angular/cli && \
-    if [ -n "${IONIC_CLI_VERSION}" ]; then npm install -g @ionic/cli@"${IONIC_CLI_VERSION}"; fi \
-  else \
-    yarn global add cordova@"${CORDOVA_VERSION}" && \
-    yarn global add @angular/cli && \
-    if [ -n "${IONIC_CLI_VERSION}" ]; then yarn global add @ionic/cli@"${IONIC_CLI_VERSION}"; fi \
-  fi && \
-  ${PACKAGE_MANAGER} cache clean --force
+# The global CLIs are just executables on PATH, so install them with npm regardless of
+# PACKAGE_MANAGER (npm is always present; Corepack's Yarn 4 has no `global add`).
+# PACKAGE_MANAGER selects how the *app's* dependencies are installed, in the app Dockerfile.
+RUN npm install -g cordova@"${CORDOVA_VERSION}" @angular/cli && \
+    if [ -n "${IONIC_CLI_VERSION}" ]; then npm install -g @ionic/cli@"${IONIC_CLI_VERSION}"; fi && \
+    npm cache clean --force
 
 
 # -----------------------------------------------------------------------------
 # Create the image.config file for the container to check the build
 # configuration of this container later on
 # -----------------------------------------------------------------------------
-RUN \
-echo "USER: ${USER}\n\
-JAVA_VERSION: ${JAVA_VERSION}\n\
-ANDROID_PLATFORMS_VERSION: ${ANDROID_PLATFORMS_VERSION}\n\
-ANDROID_BUILD_TOOLS_VERSION: ${ANDROID_BUILD_TOOLS_VERSION}\n\
-NODE_VERSION: ${NODE_VERSION}\n\
-PACKAGE_MANAGER: ${PACKAGE_MANAGER}\n\
-CORDOVA_VERSION: ${CORDOVA_VERSION}\n\
-IONIC_CLI_VERSION: ${IONIC_CLI_VERSION}\n\
-" >> /image.config && \
+RUN { \
+  echo "USER: ${USER}"; \
+  echo "JAVA_VERSION: ${JAVA_VERSION}"; \
+  echo "GRADLE_VERSION: ${GRADLE_VERSION}"; \
+  echo "ANDROID_PLATFORMS_VERSION: ${ANDROID_PLATFORMS_VERSION}"; \
+  echo "ANDROID_BUILD_TOOLS_VERSION: ${ANDROID_BUILD_TOOLS_VERSION}"; \
+  echo "NODE_VERSION: ${NODE_VERSION}"; \
+  echo "PACKAGE_MANAGER: ${PACKAGE_MANAGER}"; \
+  echo "CORDOVA_VERSION: ${CORDOVA_VERSION}"; \
+  echo "IONIC_CLI_VERSION: ${IONIC_CLI_VERSION}"; \
+} >> /image.config && \
 cat /image.config
 
 
