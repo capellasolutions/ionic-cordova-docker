@@ -8,10 +8,11 @@ LABEL org.opencontainers.image.description="Toolchain image for building Ionic/C
 # -----------------------------------------------------------------------------
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Cordova-Android ships its own Gradle wrapper; this only overrides the
-# distribution when GRADLE_VERSION is provided. cordova-android 15 needs Gradle >= 8.4.
+# cordova-android 15 needs a system Gradle (>= 8.4) on PATH to generate its Gradle
+# wrapper; this var pins the wrapper's distribution to the same version we install below.
 ARG GRADLE_VERSION
-ENV CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL=https\\://services.gradle.org/distributions/gradle-${GRADLE_VERSION:-8.7}-all.zip
+ENV GRADLE_VERSION=${GRADLE_VERSION:-8.13}
+ENV CORDOVA_ANDROID_GRADLE_DISTRIBUTION_URL=https\\://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-all.zip
 
 
 # -----------------------------------------------------------------------------
@@ -99,6 +100,19 @@ RUN  yes | sdkmanager --update && yes | sdkmanager --licenses && \
   sdkmanager "platform-tools" && \
   sdkmanager "platforms;android-${ANDROID_PLATFORMS_VERSION}" && \
   sdkmanager "build-tools;${ANDROID_BUILD_TOOLS_VERSION}"
+
+# -----------------------------------------------------------------------------
+# Install Gradle
+#
+# cordova-android 15 invokes a system `gradle` to generate the project's Gradle
+# wrapper. Ubuntu's apt Gradle is far too old for the Android Gradle Plugin, so we
+# install the official distribution and put it on PATH.
+# -----------------------------------------------------------------------------
+RUN curl -SLo /tmp/gradle.zip https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip && \
+  unzip -q /tmp/gradle.zip -d /opt && \
+  rm -f /tmp/gradle.zip && \
+  ln -s /opt/gradle-${GRADLE_VERSION}/bin/gradle /usr/local/bin/gradle && \
+  gradle --version
 
 # -----------------------------------------------------------------------------
 # Install Node & npm via NodeSource

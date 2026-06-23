@@ -34,7 +34,7 @@ docker build . -f ./app-builder.Dockerfile \
 *Note: You can change `app-builder` with whatever name you like, but you need to change it as well inside `Dockerfile` (the `FROM app-builder` line).*
 
 Docker builder arguments (defaults shown):
-* `GRADLE_VERSION`: Gradle distribution used by Cordova when overriding the wrapper. Default `8.7` (cordova-android 15 needs Gradle ≥ 8.4).
+* `GRADLE_VERSION`: Gradle version installed in the image and used for the Cordova wrapper. Default `8.13` (cordova-android 15 needs Gradle ≥ 8.4).
 * `JAVA_VERSION`: JDK version. Default `17`. This is what cordova-android 13–15 and the Android Gradle Plugin 8.x officially require; newer JDKs (21/25) aren't validated by the Android toolchain yet.
 * `ANDROID_PLATFORMS_VERSION`: Android platform (compile/target SDK) to install. Default `36`.
 * `ANDROID_BUILD_TOOLS_VERSION`: Android build-tools version. Default `36.0.0`.
