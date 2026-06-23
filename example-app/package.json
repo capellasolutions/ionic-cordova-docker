@@ -38,7 +38,6 @@
     "cordova-plugin-device": "3.0.0",
     "cordova-plugin-ionic-keyboard": "^2.2.0",
     "cordova-plugin-ionic-webview": "^5.0.1",
-    "cordova-plugin-splashscreen": "6.0.2",
     "cordova-plugin-statusbar": "4.0.0",
     "eslint": "^9.39.4",
     "jasmine-core": "~5.13.0",
@@ -55,7 +54,6 @@
     "plugins": {
       "cordova-plugin-statusbar": {},
       "cordova-plugin-device": {},
-      "cordova-plugin-splashscreen": {},
       "cordova-plugin-ionic-webview": {
         "ANDROID_SUPPORT_ANNOTATIONS_VERSION": "27.+"
       },
