@@ -11,6 +11,7 @@
 #
 # Configurable via environment, e.g.:
 #   ENV_NAME=dev PACKAGE_ID=com.acme.app PACKAGE_MANAGER=yarn ./build-mobile.sh android
+#   PACKAGE_TYPE=apk ./build-mobile.sh android   # installable .apk instead of a Play .aab
 
 set -euo pipefail
 
@@ -37,6 +38,7 @@ version="${VERSION:-0.0.1}"
 ENV_NAME="${ENV_NAME:-prod}"
 PACKAGE_ID="${PACKAGE_ID:-com.example.app}"
 PACKAGE_MANAGER="${PACKAGE_MANAGER:-npm}"
+PACKAGE_TYPE="${PACKAGE_TYPE:-bundle}"   # Android: "bundle" (.aab) or "apk"
 platform="all"
 
 # --- Build the toolchain base image ------------------------------------------
@@ -83,6 +85,7 @@ docker build . \
   --build-arg ENV_NAME="${ENV_NAME}" \
   --build-arg PACKAGE_ID="${PACKAGE_ID}" \
   --build-arg PACKAGE_MANAGER="${PACKAGE_MANAGER}" \
+  --build-arg PACKAGE_TYPE="${PACKAGE_TYPE}" \
   --build-arg PLATFORM="${platform}" \
   --build-arg VERSION="${version}" \
   -f ./Dockerfile \

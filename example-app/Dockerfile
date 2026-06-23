@@ -5,12 +5,16 @@ ARG USER
 ARG ENV_NAME
 ARG PACKAGE_ID
 ARG VERSION
+ARG PACKAGE_TYPE
 
 # If arguments not specified then set a value
 ENV USER=${USER:-ionic}
 ENV ENV_NAME=${ENV_NAME:-dev}
 ENV PACKAGE_ID=${PACKAGE_ID:-"com.example.com"}
 ENV VERSION=${VERSION:-"MISSING"}
+# Android artifact type: "bundle" (.aab for Google Play) or "apk" (installable on a device).
+# Overrides the packageType in build.json so it can be chosen per build.
+ENV PACKAGE_TYPE=${PACKAGE_TYPE:-bundle}
 
 RUN echo "------------------------------------------"&& \
     echo "| BUILDING MOBILE APPLICATION             "&& \
@@ -72,7 +76,7 @@ ENV BUILD_RESULT="Building Android App is done"
 RUN rm -rf ./www ./platforms ./plugins && \
     npm run build -- --configuration=production && \
     cordova platform add android && \
-    cordova build android --release --buildConfig=build.json -- -d && \
+    cordova build android --release --buildConfig=build.json --packageType=${PACKAGE_TYPE} -- -d && \
     mkdir -p ./output/android && \
     mv ./platforms/android/* ./output/android
 
@@ -95,7 +99,7 @@ ENV BUILD_RESULT="Building Android and then iOS Apps is done"
 RUN rm -rf ./www ./platforms ./plugins && \
     npm run build -- --configuration=production && \
     cordova platform add android && \
-    cordova build android --release --buildConfig=build.json -- -d && \
+    cordova build android --release --buildConfig=build.json --packageType=${PACKAGE_TYPE} -- -d && \
     mkdir -p ./output/android && \
     mv ./platforms/android/* ./output/android
 
