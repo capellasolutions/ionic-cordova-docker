@@ -143,8 +143,10 @@ RUN curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION}.x | bash - && \
 # cache otherwise lives in root's home, unreadable to the build user).
 ARG YARN_VERSION
 ENV YARN_VERSION=${YARN_VERSION:-stable}
+
 ARG PNPM_VERSION
 ENV PNPM_VERSION=${PNPM_VERSION:-latest}
+
 ENV COREPACK_HOME=/opt/corepack
 
 RUN corepack enable && \
