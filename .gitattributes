@@ -1,0 +1,39 @@
+# Default: let Git decide text vs. binary and normalize line endings on commit.
+# Working-tree endings follow the platform / core.autocrlf for these files.
+* text=auto
+
+# --- Files that must always be LF (Unix/Linux tooling breaks on CRLF) ---
+
+# Shell scripts
+*.sh   text eol=lf
+*.bash text eol=lf
+*.zsh  text eol=lf
+
+# Docker
+Dockerfile      text eol=lf
+*.Dockerfile    text eol=lf
+Dockerfile.*    text eol=lf
+.dockerignore   text eol=lf
+
+# Other Unix/Linux config & dotfiles run inside containers / *nix shells
+.bashrc      text eol=lf
+.bash_profile text eol=lf
+.profile     text eol=lf
+.editorconfig text eol=lf
+*.conf       text eol=lf
+
+# --- Force CRLF for Windows-only scripts ---
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# --- Treat known binaries as binary (no EOL conversion / diff) ---
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.svg  text
+*.jks  binary
+*.keystore binary
+*.plist text
