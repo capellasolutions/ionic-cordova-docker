@@ -26,7 +26,6 @@ The bundled demo is a small **Angular 22 + Ionic v9 + Cordova** app that runs **
 
 `npm run build` emits a flat `www/` (so Cordova finds `www/index.html`), and the production configuration swaps `src/environments/environment.ts` for `environment.prod.ts` — the Dockerfile first copies `environment.<ENV_NAME>.ts` over `environment.prod.ts` so one production build can target dev or prod.
 
-> **Audit:** `npm audit --omit=dev` reports **0** vulnerabilities, so the shipped app bundle is clean. The remaining advisories are all build-time tooling (Angular's esbuild pipeline and the `cordova-ios`/`xcode` chain) and are never shipped. The one deprecation warning, `uuid@7.0.3`, is a transitive of the latest `cordova-ios` via `xcode` and can't be resolved without breaking it (every `uuid` ≤ 10 is now deprecated and `uuid@11` is ESM-only).
 
 ## Usage
 **First** you need to build and push the builder image. It is separated so you don't waste time rebuilding it every time you build a new app.
