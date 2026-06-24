@@ -1,20 +1,58 @@
 <ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title>
-      Blank
-    </ion-title>
+  <ion-toolbar color="primary">
+    <ion-title>Tasks</ion-title>
+    <ion-buttons slot="end">
+      <ion-button
+        data-testid="clear-completed"
+        [disabled]="completed() === 0"
+        (click)="clearCompleted()"
+      >
+        Clear done
+      </ion-button>
+    </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">Blank</ion-title>
-    </ion-toolbar>
-  </ion-header>
+<ion-content [fullscreen]="true" class="ion-padding">
+  <p class="intro">
+    A zoneless signals demo: the list and the counters below are plain
+    <code>signal()</code> / <code>computed()</code> values &mdash; no
+    <code>zone.js</code>, no manual change detection.
+  </p>
 
-  <div id="container">
-    <strong>Ready to create an app?</strong>
-    <p>Start with Ionic <a target="_blank" rel="noopener noreferrer" href="https://ionicframework.com/docs/components">UI Components</a></p>
+  <div class="stats">
+    <ion-badge color="primary" data-testid="remaining">{{ remaining() }} open</ion-badge>
+    <ion-badge color="success" data-testid="completed">{{ completed() }} done</ion-badge>
   </div>
+
+  <form class="add-row" (submit)="addTodo(); $event.preventDefault()">
+    <ion-input
+      label="New task"
+      labelPlacement="stacked"
+      placeholder="e.g. Build a release .aab"
+      [value]="draft()"
+      (ionInput)="onDraftInput($event)"
+    ></ion-input>
+    <ion-button type="submit" data-testid="add" [disabled]="!draft().trim()">Add</ion-button>
+  </form>
+
+  <ion-list>
+    @for (todo of todos(); track todo.id) {
+      <ion-item>
+        <ion-checkbox
+          slot="start"
+          [checked]="todo.done"
+          (ionChange)="toggleTodo(todo.id)"
+        ></ion-checkbox>
+        <ion-label [class.done]="todo.done">{{ todo.title }}</ion-label>
+        <ion-button fill="clear" slot="end" (click)="removeTodo(todo.id)">Remove</ion-button>
+      </ion-item>
+    } @empty {
+      <ion-item>
+        <ion-label>
+          <ion-note>All clear — add a task above.</ion-note>
+        </ion-label>
+      </ion-item>
+    }
+  </ion-list>
 </ion-content>

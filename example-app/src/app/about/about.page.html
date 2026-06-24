@@ -1,0 +1,55 @@
+<ion-header [translucent]="true">
+  <ion-toolbar color="primary">
+    <ion-title>About</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" class="ion-padding">
+  <ion-text>
+    <h2>ionic-cordova-docker</h2>
+    <p>
+      A minimal Ionic + Cordova app that doubles as a smoke test for the Docker
+      build template. It runs fully zoneless on Angular 22.
+    </p>
+  </ion-text>
+
+  <ion-list>
+    @for (item of stack; track item.label) {
+      <ion-item>
+        <ion-label>{{ item.label }}</ion-label>
+        <ion-note slot="end">{{ item.value }}</ion-note>
+      </ion-item>
+    }
+  </ion-list>
+
+  <ion-text>
+    <h3>Build environment</h3>
+    <p>Swapped at build time by Angular's fileReplacements (dev vs prod).</p>
+  </ion-text>
+
+  <ion-list>
+    <ion-item>
+      <ion-label>Mode</ion-label>
+      <ion-note slot="end" data-testid="build-mode">{{ buildMode }}</ion-note>
+    </ion-item>
+    <ion-item>
+      <ion-label>Firebase project</ion-label>
+      <ion-note slot="end" data-testid="firebase-project">{{ firebaseProjectId }}</ion-note>
+    </ion-item>
+  </ion-list>
+
+  <ion-text>
+    <h3>Live zoneless proof</h3>
+    <p>Tapping updates a <code>signal()</code>; the doubled value is a <code>computed()</code>.</p>
+  </ion-text>
+
+  <div class="counter">
+    <span class="value" data-testid="taps">{{ taps() }}</span>
+    <span class="muted" data-testid="doubled">&times;2 = {{ doubled() }}</span>
+  </div>
+
+  <div class="actions">
+    <ion-button data-testid="tap" (click)="tap()">Tap</ion-button>
+    <ion-button fill="clear" data-testid="reset" (click)="reset()">Reset</ion-button>
+  </div>
+</ion-content>

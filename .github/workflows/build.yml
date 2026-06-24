@@ -35,7 +35,7 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run build -- --configuration=production
-      - run: npm test -- --browsers=ChromeHeadlessCI --watch=false
+      - run: npm test -- --watch=false
 
   # End-to-end proof of the Docker pipeline: build the toolchain image, then build the
   # demo Android app on top of it. Heavy (downloads the Android SDK and runs Gradle).

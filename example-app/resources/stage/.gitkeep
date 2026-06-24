@@ -1,0 +1,5 @@
+# Keeps resources/stage/ in the repo.
+#
+# For non-prod builds the example-app Dockerfile rsyncs the contents of this
+# folder over resources/ (see the ENV_NAME != prod branch), letting you stage
+# environment-specific icons/splash overrides. It is empty by default.
