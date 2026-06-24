@@ -1,18 +1,26 @@
-.count {
-  font-size: 4rem;
-  font-weight: 700;
-  text-align: center;
-  margin: 0.25rem 0 0;
+.intro {
+  margin-top: 0;
+  color: var(--ion-color-medium);
 }
 
-.doubled {
-  text-align: center;
-  margin: 0 0 1rem;
-}
-
-.actions {
+.stats {
   display: flex;
-  flex-wrap: wrap;
   gap: 0.5rem;
-  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.add-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+
+  ion-input {
+    flex: 1;
+  }
+}
+
+.done {
+  text-decoration: line-through;
+  opacity: 0.6;
 }
