@@ -1,20 +1,31 @@
 <ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title>
-      Blank
-    </ion-title>
+  <ion-toolbar color="primary">
+    <ion-title>ionic-cordova-docker</ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">Blank</ion-title>
-    </ion-toolbar>
-  </ion-header>
+<ion-content [fullscreen]="true" class="ion-padding">
+  <ion-card>
+    <ion-card-header>
+      <ion-card-subtitle>Angular 22 &middot; Ionic v9 &middot; zoneless</ion-card-subtitle>
+      <ion-card-title>Signals counter</ion-card-title>
+    </ion-card-header>
+    <ion-card-content>
+      <p>
+        This demo runs with no <code>zone.js</code>. Change detection is driven entirely by
+        signals, so the values below stay in sync without Zone patching.
+      </p>
 
-  <div id="container">
-    <strong>Ready to create an app?</strong>
-    <p>Start with Ionic <a target="_blank" rel="noopener noreferrer" href="https://ionicframework.com/docs/components">UI Components</a></p>
-  </div>
+      <p class="count" data-testid="count">{{ count() }}</p>
+      <ion-text color="medium">
+        <p class="doubled" data-testid="doubled">doubled = {{ doubled() }}</p>
+      </ion-text>
+
+      <div class="actions">
+        <ion-button fill="outline" data-testid="decrement" (click)="decrement()">-1</ion-button>
+        <ion-button fill="clear" data-testid="reset" (click)="reset()">Reset</ion-button>
+        <ion-button data-testid="increment" (click)="increment()">+1</ion-button>
+      </div>
+    </ion-card-content>
+  </ion-card>
 </ion-content>

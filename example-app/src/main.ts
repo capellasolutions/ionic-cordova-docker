@@ -1,25 +1,6 @@
-import { enableProdMode } from '@angular/core';
 import { bootstrapApplication } from '@angular/platform-browser';
-import {
-  PreloadAllModules,
-  RouteReuseStrategy,
-  provideRouter,
-  withPreloading,
-} from '@angular/router';
-import { IonicRouteStrategy, provideIonicAngular } from '@ionic/angular/standalone';
 
-import { routes } from './app/app.routes';
-import { AppComponent } from './app/app.component';
-import { environment } from './environments/environment';
+import { App } from './app/app';
+import { appConfig } from './app/app.config';
 
-if (environment.production) {
-  enableProdMode();
-}
-
-bootstrapApplication(AppComponent, {
-  providers: [
-    { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
-    provideIonicAngular(),
-    provideRouter(routes, withPreloading(PreloadAllModules)),
-  ],
-}).catch((err) => console.error(err));
+bootstrapApplication(App, appConfig).catch((err) => console.error(err));
