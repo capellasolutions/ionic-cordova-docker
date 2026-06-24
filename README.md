@@ -5,15 +5,28 @@ These files can be placed inside an Ionic project to use.
 
 ## Repository layout
 * `app-builder.Dockerfile` — builds the heavy **toolchain base image** (Ubuntu + JDK + Android SDK + Node + Cordova/Ionic CLIs). Build it once and reuse it; that's why it is a separate image.
-* `Dockerfile` — `FROM app-builder`, copies your app in and runs `ionic cordova build`. This is the per-app build.
+* `Dockerfile` — `FROM app-builder`, copies your app in, builds the Angular web app and runs `cordova build`. This is the per-app build.
 * `build-mobile.sh` — convenience wrapper that builds both images and copies the artifact out.
-* `example-app/` — a stock Ionic starter you can **clone and build immediately** to test the pipeline end-to-end. It carries its **own copies** of the three files above so it is self-contained (Docker can't reach files outside its build context, so the copies are required, not accidental). The root files are the source of truth; the `example-app` copies of `Dockerfile` and `app-builder.Dockerfile` are kept byte-for-byte identical (CI enforces this). `example-app/build-mobile.sh` is intentionally slightly different (it uses `version=0.0.0` and a self-contained header comment).
+* `example-app/` — a small **Angular 22 + Ionic v9 (zoneless) + Cordova** demo you can **clone and build immediately** to test the pipeline end-to-end. It carries its **own copies** of the three files above so it is self-contained (Docker can't reach files outside its build context, so the copies are required, not accidental). The root files are the source of truth; the `example-app` copies of `Dockerfile` and `app-builder.Dockerfile` are kept byte-for-byte identical (CI enforces this). `example-app/build-mobile.sh` is intentionally slightly different (it uses `version=0.0.0` and a self-contained header comment).
 
 To try it out right away:
 ```shell
 cd example-app
 ./build-mobile.sh
 ```
+
+## The demo app (`example-app`)
+
+The bundled demo is a small **Angular 22 + Ionic v9 + Cordova** app that runs **fully zoneless** (no `zone.js`). It exercises the Docker pipeline end-to-end and doubles as an up-to-date reference for the modern toolchain:
+
+* **Angular 22** with the esbuild `@angular/build:application` builder, standalone components and signals — zoneless by default (`provideZonelessChangeDetection()`), no `zone.js` in the bundle.
+* **Ionic** pinned to a **v9 pre-release dev build** of `@ionic/angular` (`8.8.12-dev…`). v9 adds Angular 21/22 support and zoneless-by-default. Until it ships as stable (~Q3 2026) the pin is exact. **When `@ionic/angular@9` is released, bump the pin to `^9` and delete this note.**
+* **TypeScript 6**, **Vitest** (jsdom) for unit tests, **angular-eslint** for linting.
+* The toolchain base image builds on **Ubuntu 26.04**.
+
+`npm run build` emits a flat `www/` (so Cordova finds `www/index.html`), and the production configuration swaps `src/environments/environment.ts` for `environment.prod.ts` — the Dockerfile first copies `environment.<ENV_NAME>.ts` over `environment.prod.ts` so one production build can target dev or prod.
+
+> **Audit:** `npm audit --omit=dev` reports **0** vulnerabilities, so the shipped app bundle is clean. The remaining advisories are all build-time tooling (Angular's esbuild pipeline and the `cordova-ios`/`xcode` chain) and are never shipped. The one deprecation warning, `uuid@7.0.3`, is a transitive of the latest `cordova-ios` via `xcode` and can't be resolved without breaking it (every `uuid` ≤ 10 is now deprecated and `uuid@11` is ESM-only).
 
 ## Usage
 **First** you need to build and push the builder image. It is separated so you don't waste time rebuilding it every time you build a new app.
