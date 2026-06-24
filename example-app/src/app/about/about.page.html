@@ -23,6 +23,22 @@
   </ion-list>
 
   <ion-text>
+    <h3>Build environment</h3>
+    <p>Swapped at build time by Angular's fileReplacements (dev vs prod).</p>
+  </ion-text>
+
+  <ion-list>
+    <ion-item>
+      <ion-label>Mode</ion-label>
+      <ion-note slot="end" data-testid="build-mode">{{ buildMode }}</ion-note>
+    </ion-item>
+    <ion-item>
+      <ion-label>Firebase project</ion-label>
+      <ion-note slot="end" data-testid="firebase-project">{{ firebaseProjectId }}</ion-note>
+    </ion-item>
+  </ion-list>
+
+  <ion-text>
     <h3>Live zoneless proof</h3>
     <p>Tapping updates a <code>signal()</code>; the doubled value is a <code>computed()</code>.</p>
   </ion-text>

@@ -1,10 +1,10 @@
-// This file can be replaced during build by using the `fileReplacements` array.
-// `ng build --prod` replaces `environment.ts` with `environment.prod.ts`.
-// The list of file replacements can be found in `angular.json`.
+// Dev-backend environment. The Docker build copies this over
+// environment.prod.ts when ENV_NAME=dev, so a production build points at the
+// dev Firebase project while staying fully optimized.
 
 export const environment = {
   production: true,
-  APIEndpoints: ''
+  APIEndpoints: '',
 };
 
 export const firebaseConfig = {
@@ -15,5 +15,5 @@ export const firebaseConfig = {
   storageBucket: 'example-app-dev.appspot.com',
   messagingSenderId: 'SENDER_ID',
   appId: 'APP_ID',
-  measurementId: 'MEASUREMENT_ID'
+  measurementId: 'MEASUREMENT_ID',
 };

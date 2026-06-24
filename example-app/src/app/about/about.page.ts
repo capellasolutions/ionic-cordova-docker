@@ -12,6 +12,8 @@ import {
   IonToolbar,
 } from '@ionic/angular/standalone';
 
+import { environment, firebaseConfig } from '../../environments/environment';
+
 interface StackItem {
   label: string;
   value: string;
@@ -44,6 +46,9 @@ export class AboutPage {
     { label: 'Native', value: 'Cordova (Android / iOS)' },
     { label: 'Toolchain', value: 'Ubuntu 26.04 Docker image' },
   ];
+
+  readonly buildMode = environment.production ? 'production' : 'development';
+  readonly firebaseProjectId = firebaseConfig.projectId;
 
   readonly taps = signal(0);
   readonly doubled = computed(() => this.taps() * 2);
