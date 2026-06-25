@@ -121,11 +121,12 @@ if [ "$platform" = "ios" ] || [ "$platform" = "all" ]; then
   echo "Copying generated iOS build to build-output/ios"
   docker run --user root:root -v "$cur_dir"/build-output:/app/mount:Z --rm \
     --entrypoint cp app-build -r ./output/ios /app/mount
-  # iOS can only be *prepared* on Linux; finish the build on macOS. CocoaPods is
-  # only available there, so skip 'pod install' cleanly when it's absent.
+  # iOS can only be *prepared* on Linux; finish the build on macOS. The Xcode project (and any Pods its plugins need) was
+  # already generated inside the Docker image, so this host-side 'pod install' is only a convenience to refresh Pods on a
+  # macOS machine — it is safely skipped when CocoaPods isn't present here. This is informational, not an error.
   if command -v pod >/dev/null 2>&1; then
     cd "$cur_dir"/build-output/ios && pod repo update && pod install
   else
-    echo "Skipping 'pod install' (CocoaPods not found — run it on macOS)."
+    echo "iOS project already prepared inside Docker. Skipping the host 'pod install' (no CocoaPods here; it is only needed to refresh Pods on macOS)."
   fi
 fi
