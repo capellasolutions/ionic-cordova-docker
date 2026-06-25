@@ -3,6 +3,8 @@ So this is a project that should help you produce an Android project and build, 
 
 These files can be placed inside an Ionic project to use.
 
+> Prefer Capacitor? See the sibling project [ionic-capacitor-docker](https://github.com/capellasolutions/ionic-capacitor-docker) — the same Dockerized pipeline built around Capacitor (and it defaults to pnpm instead of npm).
+
 ## Repository layout
 * `app-builder.Dockerfile` — builds the heavy **toolchain base image** (Ubuntu + JDK + Android SDK + Node + Cordova/Ionic CLIs). Build it once and reuse it; that's why it is a separate image.
 * `Dockerfile` — `FROM app-builder`, copies your app in, builds the Angular web app and runs `cordova build`. This is the per-app build.

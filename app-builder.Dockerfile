@@ -136,12 +136,11 @@ RUN curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION}.x | bash - && \
     node --version && \
     npm --version
 
-# Yarn and pnpm are installed on demand with npm (which always ships with Node). We avoid
-# Corepack on purpose: it is being unbundled from Node (25+), so relying on it would break
-# the moment NODE_VERSION moves forward. Only the SELECTED manager is installed — npm builds
-# (the default) add nothing extra, keeping the image smaller. Pick one per build via
-# PACKAGE_MANAGER. This RUN executes as root, so the global install lands on the shared PATH
-# and stays usable by the non-root build user created later.
+# Yarn and pnpm are installed on demand with npm (which always ships with Node). We avoid Corepack on purpose: it is
+# being unbundled from Node (25+), so relying on it would break the moment NODE_VERSION moves forward. Only the SELECTED
+# manager is installed — npm builds (the default) add nothing extra, keeping the image smaller. Pick one per build via
+# PACKAGE_MANAGER. This RUN executes as root, so the global install lands on the shared PATH and stays usable by the
+# non-root build user created later.
 ARG YARN_VERSION
 ENV YARN_VERSION=${YARN_VERSION:-stable}
 
