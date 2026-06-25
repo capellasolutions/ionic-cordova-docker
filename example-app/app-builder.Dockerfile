@@ -136,24 +136,25 @@ RUN curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION}.x | bash - && \
     node --version && \
     npm --version
 
-# Yarn and pnpm are provided through Corepack (bundled with Node), so all three package
-# managers (npm + yarn + pnpm) are available; pick one per build via PACKAGE_MANAGER.
-# COREPACK_HOME is a shared, world-writable cache so the non-root build user can use (and
-# resolve project-pinned versions of) the prepared package managers (Corepack's default
-# cache otherwise lives in root's home, unreadable to the build user).
+# Yarn and pnpm are installed on demand with npm (which always ships with Node). We avoid
+# Corepack on purpose: it is being unbundled from Node (25+), so relying on it would break
+# the moment NODE_VERSION moves forward. Only the SELECTED manager is installed — npm builds
+# (the default) add nothing extra, keeping the image smaller. Pick one per build via
+# PACKAGE_MANAGER. This RUN executes as root, so the global install lands on the shared PATH
+# and stays usable by the non-root build user created later.
 ARG YARN_VERSION
 ENV YARN_VERSION=${YARN_VERSION:-stable}
 
 ARG PNPM_VERSION
 ENV PNPM_VERSION=${PNPM_VERSION:-latest}
 
-ENV COREPACK_HOME=/opt/corepack
-
-RUN corepack enable && \
-    corepack prepare yarn@${YARN_VERSION} pnpm@${PNPM_VERSION} --activate && \
-    chmod -R a+rwX ${COREPACK_HOME} && \
-    yarn --version && \
-    pnpm --version
+RUN if [ "${PACKAGE_MANAGER}" = "pnpm" ]; then \
+      npm install -g pnpm@${PNPM_VERSION} && pnpm --version; \
+    elif [ "${PACKAGE_MANAGER}" = "yarn" ]; then \
+      npm install -g yarn@${YARN_VERSION} && yarn --version; \
+    else \
+      echo "Using npm bundled with Node; no extra package manager installed."; \
+    fi
 
 # -----------------------------------------------------------------------------
 # Install Ruby + CocoaPods (used when preparing the iOS project)
