@@ -14,7 +14,7 @@
     "lint": "ng lint"
   },
   "dependencies": {
-    "@angular/common": "^22.0.2",
+    "@angular/common": "^22.0.4",
     "@angular/compiler": "^22.0.2",
     "@angular/core": "^22.0.2",
     "@angular/forms": "^22.0.2",
