@@ -142,7 +142,8 @@ docker build . -f ./app-builder.Dockerfile \
 | `JAVA_VERSION` | `21` (LTS) | cordova-android 13–15 officially document JDK 17, but AGP 8.x / Gradle 8.5+ also run on JDK 21. JDK 25 would need AGP 9 / Gradle 9.1+. |
 | `ANDROID_PLATFORMS_VERSION` | `36` | Android platform (compile/target SDK) to install. |
 | `ANDROID_BUILD_TOOLS_VERSION` | `36.0.0` | Android build-tools version (cordova-android 15 requires Build Tools 36.0.0). |
-| `ANDROID_SDK_TOOLS_VERSION` | `14742923` | Android command-line tools build number. |
+| `ANDROID_EXTRA_PACKAGES` | `platforms;android-37.2 build-tools;37.0.0` | Extra `sdkmanager` packages, space separated. The default stages the **Android 37** toolchain (SDK Platform 37.2 + Build Tools 37.0.0) so the image already has it the day cordova-android can target API 37 — see the note below. Set to `""` to skip it, or use it for anything else (`ndk;…`, `cmake;…`, `emulator`). |
+| `ANDROID_SDK_TOOLS_VERSION` | `16111833` | Android command-line tools build number. |
 | `PACKAGE_MANAGER` | `npm` | `npm`, `yarn`, or `pnpm`. Only the **selected** manager is installed (npm ships with Node; yarn/pnpm are added on demand with `npm install -g`). This avoids Corepack, which is being unbundled from Node 25+. Also selects how `Dockerfile` installs *your app's* dependencies (`npm ci` / `yarn install --frozen-lockfile` / `pnpm install --frozen-lockfile`) — commit the matching lockfile. |
 | `NODE_VERSION` | `24` (LTS) | Node.js major (installed via NodeSource). |
 | `YARN_VERSION` | `stable` | Yarn version (installed only when `PACKAGE_MANAGER=yarn`). |
@@ -155,6 +156,9 @@ docker build . -f ./app-builder.Dockerfile \
 
 > [!TIP]
 > Check the [Android Platform Guide](https://cordova.apache.org/docs/en/latest/guide/platforms/android/) first, make sure you have a matching `cordova-android` in `package.json`, and that `<preference name="android-targetSdkVersion" value="X" />` in `config.xml` matches `ANDROID_PLATFORMS_VERSION`.
+
+> [!NOTE]
+> **Android 37 is installed but not yet targeted.** cordova-android 15 resolves its target as the *integer* `android-<android-targetSdkVersion>`, and Google never published a plain `platforms;android-37` — only the minor releases 37.0 / 37.1 / 37.2. AGP reaches those through a separate `compileSdkMinor`, which Cordova does not expose. So `ANDROID_PLATFORMS_VERSION` stays at `36` while `ANDROID_EXTRA_PACKAGES` puts Platform 37.2 and Build Tools 37.0.0 in the image ready to go. When cordova-android gains API 37 support, move `37.2` / `37.0.0` into the two pinned args.
 
 ### 2. Build your app
 
