@@ -47,6 +47,18 @@ jobs:
       - uses: actions/checkout@v7
       - name: Build the toolchain base image
         run: docker build . -f ./app-builder.Dockerfile -t app-builder
+      - name: The toolchain image must carry the SDK it says it does
+        # sdkmanager exits 0 for packages it silently skips, and the Android CLI that now backs it
+        # prints no install output, so assert on disk that the pinned and the staged SDK both landed.
+        run: |
+          docker run --rm app-builder sh -c '
+            set -eu
+            for pkg in platforms/android-$ANDROID_PLATFORMS_VERSION \
+                       build-tools/$ANDROID_BUILD_TOOLS_VERSION \
+                       $(echo "$ANDROID_EXTRA_PACKAGES" | tr ";" "/"); do
+              test -d "$ANDROID_SDK_ROOT/$pkg" || { echo "MISSING: $pkg"; exit 1; }
+              echo "present: $pkg"
+            done'
       - name: Build the demo app (Android) end-to-end
         working-directory: example-app
         run: |
