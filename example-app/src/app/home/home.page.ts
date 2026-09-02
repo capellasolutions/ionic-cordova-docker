@@ -13,7 +13,7 @@ import {
   IonNote,
   IonTitle,
   IonToolbar,
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 
 interface Todo {
   id: number;

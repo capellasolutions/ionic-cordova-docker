@@ -10,7 +10,7 @@ import {
   IonText,
   IonTitle,
   IonToolbar,
-} from '@ionic/angular/standalone';
+} from '@ionic/angular';
 
 import { environment, firebaseConfig } from '../../environments/environment';
 

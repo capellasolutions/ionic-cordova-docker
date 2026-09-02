@@ -103,7 +103,7 @@ That builds the toolchain image, builds the demo, and copies the artifact into `
 The bundled demo is a small **Angular 22 + Ionic v9 + Cordova** app that runs **fully zoneless** (no `zone.js`). It exercises the Docker pipeline end-to-end and doubles as an up-to-date reference for the modern toolchain:
 
 - **Angular 22** with the esbuild `@angular/build:application` builder, standalone components and signals — zoneless by default (`provideZonelessChangeDetection()`), no `zone.js` in the bundle.
-- **Ionic** pinned to a **v9 pre-release dev build** of `@ionic/angular` (`8.8.12-dev…`). v9 adds Angular 21/22 support and zoneless-by-default. Until it ships as stable (~Q3 2026) the pin is exact. **When `@ionic/angular@9` is released, bump the pin to `^9` and delete this note.**
+- **Ionic v9** (`@ionic/angular@^9`, now stable) — Angular 21/22 support and zoneless by default. v9 promotes the standalone build to the package root, so components come from `@ionic/angular` instead of the old `@ionic/angular/standalone` subpath.
 - **Cordova** with **cordova-android 15** (SDK Platform 36, Build Tools 36.0.0). The Cordova CLI is installed globally in the toolchain image.
 - **npm** is the default package manager (`yarn`/`pnpm` are supported too — see `PACKAGE_MANAGER`). The Capacitor sibling defaults to pnpm instead.
 - **TypeScript 6**, **Vitest** (jsdom) for unit tests, **angular-eslint** for linting.
