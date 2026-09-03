@@ -2,24 +2,16 @@
 # For additional information regarding the format and rule options, please see:
 # https://github.com/browserslist/browserslist#queries
 
-# Ionic 9's supported browsers: https://ionicframework.com/docs/updating/9-0
-#
-# Stated as explicit floors rather than the CLI's default "last N versions". A relative query drifts upward with every
-# browser release and silently narrows what the bundle runs on: it had already reached iOS 18 while the app still ships
-# an iOS 16 deployment target, so the output would not have parsed on a device the app installs on happily. A floor only
-# moves when someone decides to move it.
-#
-# One deliberate deviation: Ionic supports Firefox 75+, but 75 predates top-level await, which Angular's own test-bed
-# bootstrap emits — so the unit tests will not compile against it. Firefox is never a shipping target here (this app runs
-# in the iOS WKWebView and the Android System WebView; Firefox only ever sees `ng serve`), so the floor is the first
-# version that supports the syntax Angular emits.
+# For the full list of supported browsers by the Angular framework, please see:
+# https://angular.io/guide/browser-support
 
 # You can see what browsers were selected by your queries by running:
 #   npx browserslist
 
-Chrome >= 89
-ChromeAndroid >= 89
-Edge >= 89
-Firefox >= 89
-Safari >= 16
-iOS >= 16
+last 1 Chrome version
+last 1 Firefox version
+last 2 Edge major versions
+last 2 Safari major versions
+last 2 iOS major versions
+Firefox ESR
+not IE 11 # Angular supports IE 11 only as an opt-in. To opt-in, remove the 'not' prefix on this line.
