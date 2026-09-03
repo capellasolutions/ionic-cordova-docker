@@ -84,10 +84,19 @@ ARG ANDROID_PLATFORMS_VERSION
 ENV ANDROID_PLATFORMS_VERSION=${ANDROID_PLATFORMS_VERSION:-36}
 
 ARG ANDROID_SDK_TOOLS_VERSION
-ENV ANDROID_SDK_TOOLS_LINK=https://dl.google.com/android/repository/commandlinetools-linux-${ANDROID_SDK_TOOLS_VERSION:-14742923}_latest.zip
+ENV ANDROID_SDK_TOOLS_LINK=https://dl.google.com/android/repository/commandlinetools-linux-${ANDROID_SDK_TOOLS_VERSION:-16111833}_latest.zip
 
 ARG ANDROID_BUILD_TOOLS_VERSION
 ENV ANDROID_BUILD_TOOLS_VERSION=${ANDROID_BUILD_TOOLS_VERSION:-36.0.0}
+
+# Extra sdkmanager packages installed alongside the two pinned above, as a space-separated list of full package paths.
+# The default stages the Android 37 toolchain so the image already has it the day Cordova can target it. It cannot yet:
+# cordova-android 15 asks for the *integer* target "android-<android-targetSdkVersion>", and Google never published a
+# plain "platforms;android-37" — only the minor releases 37.0 / 37.1 / 37.2 — so 36 stays the pinned target and 37
+# rides along unused. When cordova-android does support it, move 37.2 / 37.0.0 up into the two ARGs above. Set this to
+# "" to install nothing extra, or reuse it for any other package ("ndk;...", "cmake;...", "emulator", ...).
+ARG ANDROID_EXTRA_PACKAGES
+ENV ANDROID_EXTRA_PACKAGES="${ANDROID_EXTRA_PACKAGES:-platforms;android-37.2 build-tools;37.0.0}"
 
 RUN \
   mkdir -p /root/.android && touch /root/.android/repositories.cfg  && \
@@ -100,7 +109,9 @@ RUN \
 RUN  yes | sdkmanager --update && yes | sdkmanager --licenses && \
   sdkmanager "platform-tools" && \
   sdkmanager "platforms;android-${ANDROID_PLATFORMS_VERSION}" && \
-  sdkmanager "build-tools;${ANDROID_BUILD_TOOLS_VERSION}"
+  sdkmanager "build-tools;${ANDROID_BUILD_TOOLS_VERSION}" && \
+  # Deliberately unquoted so the list splits into one argument per package; word splitting keeps the ";".
+  if [ -n "${ANDROID_EXTRA_PACKAGES}" ]; then sdkmanager ${ANDROID_EXTRA_PACKAGES}; fi
 
 # -----------------------------------------------------------------------------
 # Install Gradle
@@ -236,6 +247,7 @@ RUN { \
   echo "GRADLE_VERSION: ${GRADLE_VERSION}"; \
   echo "ANDROID_PLATFORMS_VERSION: ${ANDROID_PLATFORMS_VERSION}"; \
   echo "ANDROID_BUILD_TOOLS_VERSION: ${ANDROID_BUILD_TOOLS_VERSION}"; \
+  echo "ANDROID_EXTRA_PACKAGES: ${ANDROID_EXTRA_PACKAGES}"; \
   echo "NODE_VERSION: ${NODE_VERSION}"; \
   echo "PACKAGE_MANAGER: ${PACKAGE_MANAGER}"; \
   echo "CORDOVA_VERSION: ${CORDOVA_VERSION}"; \
