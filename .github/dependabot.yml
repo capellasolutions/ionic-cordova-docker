@@ -6,6 +6,23 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 10
+    groups:
+      # The framework packages peer-depend on each other at the exact same version (@angular/common@22.2.5 wants
+      # @angular/core@22.2.5), so a bump of just one of them fails `npm ci` with ERESOLVE. Keep them in one PR.
+      angular:
+        patterns:
+          - '@angular/*'
+          - '@angular-eslint/*'
+          - 'angular-eslint'
+    ignore:
+      # Angular majors go through `ng update`, which runs the schematic migrations; a Dependabot major bump would
+      # only be a broken partial upgrade.
+      - dependency-name: '@angular/*'
+        update-types: ['version-update:semver-major']
+      - dependency-name: '@angular-eslint/*'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'angular-eslint'
+        update-types: ['version-update:semver-major']
 
   # Base image (ubuntu) referenced by the canonical Docker files.
   - package-ecosystem: docker
