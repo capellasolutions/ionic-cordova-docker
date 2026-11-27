@@ -14,15 +14,16 @@ updates:
           - '@angular/*'
           - '@angular-eslint/*'
           - 'angular-eslint'
-    ignore:
-      # Angular majors go through `ng update`, which runs the schematic migrations; a Dependabot major bump would
-      # only be a broken partial upgrade.
-      - dependency-name: '@angular/*'
-        update-types: ['version-update:semver-major']
-      - dependency-name: '@angular-eslint/*'
-        update-types: ['version-update:semver-major']
-      - dependency-name: 'angular-eslint'
-        update-types: ['version-update:semver-major']
+        update-types: ['minor', 'patch']
+      # A new major gets its own PR, so it doubles as the heads-up that the major is out. It will likely fail CI: check
+      # out its branch and run the migrations Dependabot skips (`ng update <pkg> --migrate-only --from=<old>`). Keeping
+      # it apart from the minor/patch group means one failing major doesn't sit in the same PR as routine bumps.
+      angular-major:
+        patterns:
+          - '@angular/*'
+          - '@angular-eslint/*'
+          - 'angular-eslint'
+        update-types: ['major']
 
   # Base image (ubuntu) referenced by the canonical Docker files.
   - package-ecosystem: docker
