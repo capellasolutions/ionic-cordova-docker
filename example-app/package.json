@@ -20,7 +20,7 @@
     "@angular/forms": "^22.3.0",
     "@angular/platform-browser": "^22.3.0",
     "@angular/router": "^22.3.0",
-    "@ionic/angular": "^9.0.11",
+    "@ionic/angular": "^9.0.13",
     "ionicons": "^8.1.1",
     "rxjs": "~7.8.2",
     "tslib": "^2.9.1"
